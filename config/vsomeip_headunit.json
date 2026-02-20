@@ -1,0 +1,20 @@
+{
+    "unicast": "127.0.0.1",
+    "logging": {
+        "level": "warning",
+        "console": "false"
+    },
+    "applications": [
+        {
+            "name": "HeadUnit",
+            "id": "0x1002"
+        }
+    ],
+    "routing": "InstrumentCluster",
+    "service-discovery": {
+        "enable": "true",
+        "multicast": "224.0.0.1",
+        "port": "30490",
+        "protocol": "udp"
+    }
+}

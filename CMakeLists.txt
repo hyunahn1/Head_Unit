@@ -1,0 +1,119 @@
+cmake_minimum_required(VERSION 3.16)
+project(head_unit VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
+# Qt5/Qt6
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets)
+
+# Add Multimedia when MediaPlayer uses QMediaPlayer:
+# find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Multimedia MultimediaWidgets)
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_standard_project_setup()
+endif()
+
+# AGL is removed from modern macOS SDK. Qt's FindWrapOpenGL.cmake hardcodes
+# -framework AGL as a fallback when AGL.framework is not found.
+# Remove it from WrapOpenGL::WrapOpenGL directly.
+if(APPLE AND TARGET WrapOpenGL::WrapOpenGL)
+    get_target_property(_wrap_gl_libs WrapOpenGL::WrapOpenGL INTERFACE_LINK_LIBRARIES)
+    if(_wrap_gl_libs)
+        list(FILTER _wrap_gl_libs EXCLUDE REGEX ".*AGL.*")
+        set_target_properties(WrapOpenGL::WrapOpenGL PROPERTIES
+            INTERFACE_LINK_LIBRARIES "${_wrap_gl_libs}"
+        )
+    endif()
+endif()
+
+
+# Sources
+set(SOURCES
+    src/main.cpp
+    src/MainWindow.cpp
+    src/widgets/TabBar.cpp
+    src/widgets/GearPanel.cpp
+    src/widgets/StatusBar.cpp
+    src/screens/MediaScreen.cpp
+    src/screens/AmbientScreen.cpp
+    src/screens/GearScreen.cpp
+    src/screens/SettingsScreen.cpp
+    src/ipc/MockVehicleDataProvider.cpp
+    src/ipc/GearStateManager.cpp
+    src/media/MediaPlayer.cpp
+    src/media/PlaylistModel.cpp
+    src/led/MockLedController.cpp
+)
+
+set(HEADERS
+    src/MainWindow.h
+    src/widgets/TabBar.h
+    src/widgets/GearPanel.h
+    src/widgets/StatusBar.h
+    src/screens/MediaScreen.h
+    src/screens/AmbientScreen.h
+    src/screens/GearScreen.h
+    src/screens/SettingsScreen.h
+    src/ipc/IVehicleDataProvider.h
+    src/ipc/MockVehicleDataProvider.h
+    src/ipc/GearStateManager.h
+    src/media/MediaPlayer.h
+    src/media/PlaylistModel.h
+    src/led/ILedController.h
+    src/led/MockLedController.h
+)
+
+set(RESOURCES
+    resources/headunit.qrc
+)
+
+# Executable
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_add_executable(${PROJECT_NAME}
+        MANUAL_FINALIZATION
+        ${SOURCES}
+        ${HEADERS}
+        ${RESOURCES}
+    )
+else()
+    add_executable(${PROJECT_NAME}
+        ${SOURCES}
+        ${HEADERS}
+        ${RESOURCES}
+    )
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/screens
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ipc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/media
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/led
+)
+
+if(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
+endif()
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION .  # Required for MACOSX_BUNDLE on Apple
+)
+install(DIRECTORY config/ DESTINATION bin/config FILES_MATCHING PATTERN "*.json")
+install(DIRECTORY python/ DESTINATION bin/python FILES_MATCHING PATTERN "*.py")
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_finalize_executable(${PROJECT_NAME})
+endif()
