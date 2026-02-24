@@ -12,8 +12,14 @@ set(CMAKE_AUTORCC ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets)
 
-# Add Multimedia when MediaPlayer uses QMediaPlayer:
-# find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Multimedia MultimediaWidgets)
+# Multimedia: optional - required on target (RPi/Yocto), graceful degradation on dev machine
+find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Multimedia)
+if(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
+    message(STATUS "Qt Multimedia found - real audio playback enabled")
+    add_compile_definitions(HU_MULTIMEDIA_AVAILABLE)
+else()
+    message(STATUS "Qt Multimedia NOT found - stub playback (UI only)")
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_standard_project_setup()
@@ -40,6 +46,8 @@ set(SOURCES
     src/widgets/TabBar.cpp
     src/widgets/GearPanel.cpp
     src/widgets/StatusBar.cpp
+    src/widgets/GlowOverlay.cpp
+    src/widgets/SplashScreen.cpp
     src/screens/MediaScreen.cpp
     src/screens/AmbientScreen.cpp
     src/screens/GearScreen.cpp
@@ -56,6 +64,8 @@ set(HEADERS
     src/widgets/TabBar.h
     src/widgets/GearPanel.h
     src/widgets/StatusBar.h
+    src/widgets/GlowOverlay.h
+    src/widgets/SplashScreen.h
     src/screens/MediaScreen.h
     src/screens/AmbientScreen.h
     src/screens/GearScreen.h
@@ -92,6 +102,7 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
+    $<$<TARGET_EXISTS:Qt${QT_VERSION_MAJOR}::Multimedia>:Qt${QT_VERSION_MAJOR}::Multimedia>
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

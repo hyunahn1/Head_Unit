@@ -1,6 +1,6 @@
 /**
  * @file SettingsScreen.h
- * @brief Settings tab - calibration, theme, etc.
+ * @brief Settings tab - speed unit, about
  * @author Ahn Hyunjun
  * @date 2026-02-20
  */
@@ -19,6 +19,9 @@ class SettingsScreen : public QWidget
 
 public:
     explicit SettingsScreen(GearStateManager *gearState, QWidget *parent = nullptr);
+
+signals:
+    void speedUnitChanged(bool metric);   // true = km/h, false = mph
 
 private:
     GearPanel *m_gearPanel;

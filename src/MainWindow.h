@@ -10,6 +10,8 @@
 
 #include <QMainWindow>
 #include <QStackedWidget>
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
 
 class TabBar;
 class StatusBar;
@@ -17,6 +19,7 @@ class MediaScreen;
 class AmbientScreen;
 class GearScreen;
 class SettingsScreen;
+class GlowOverlay;
 class IVehicleDataProvider;
 class GearStateManager;
 class ILedController;
@@ -54,6 +57,8 @@ private:
     IVehicleDataProvider *m_vehicleData;   // Mock or VSomeIPClient
     GearStateManager *m_gearStateManager;
     ILedController *m_ledController;
+    GlowOverlay *m_ambientGlow;            // Full-window ambient glow
+    bool m_animating = false;              // Prevent overlapping slide animations
 
     static constexpr int WINDOW_WIDTH = 1280;
     static constexpr int WINDOW_HEIGHT = 720;
