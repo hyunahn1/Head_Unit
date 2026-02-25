@@ -1,0 +1,104 @@
+[
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/head_unit_autogen/mocs_compilation.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/mocs_compilation.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/mocs_compilation.cpp",
+  "output": "CMakeFiles/head_unit.dir/head_unit_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/main.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/main.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/main.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/MainWindow.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/MainWindow.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/MainWindow.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/MainWindow.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/widgets/TabBar.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/widgets/TabBar.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/widgets/TabBar.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/widgets/TabBar.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/widgets/GearPanel.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/widgets/GearPanel.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/widgets/GearPanel.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/widgets/GearPanel.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/widgets/StatusBar.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/widgets/StatusBar.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/widgets/StatusBar.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/widgets/StatusBar.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/widgets/GlowOverlay.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/widgets/GlowOverlay.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/widgets/GlowOverlay.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/widgets/GlowOverlay.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/widgets/SplashScreen.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/widgets/SplashScreen.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/widgets/SplashScreen.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/widgets/SplashScreen.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/screens/MediaScreen.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/screens/MediaScreen.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/screens/MediaScreen.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/screens/MediaScreen.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/screens/AmbientScreen.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/screens/AmbientScreen.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/screens/AmbientScreen.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/screens/AmbientScreen.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/screens/SettingsScreen.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/screens/SettingsScreen.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/screens/SettingsScreen.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/screens/SettingsScreen.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/ipc/MockVehicleDataProvider.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/ipc/MockVehicleDataProvider.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/ipc/MockVehicleDataProvider.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/ipc/MockVehicleDataProvider.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/ipc/GearStateManager.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/ipc/GearStateManager.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/ipc/GearStateManager.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/ipc/GearStateManager.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/media/MediaPlayer.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/media/MediaPlayer.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/media/MediaPlayer.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/media/MediaPlayer.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/media/PlaylistModel.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/media/PlaylistModel.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/media/PlaylistModel.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/media/PlaylistModel.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/src/led/MockLedController.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/src/led/MockLedController.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/src/led/MockLedController.cpp",
+  "output": "CMakeFiles/head_unit.dir/src/led/MockLedController.cpp.o"
+},
+{
+  "directory": "/home/seame2026/piracer/Head_Unit_jun/build_new",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/include -I/home/seame2026/piracer/Head_Unit_jun/src -I/home/seame2026/piracer/Head_Unit_jun/src/widgets -I/home/seame2026/piracer/Head_Unit_jun/src/screens -I/home/seame2026/piracer/Head_Unit_jun/src/ipc -I/home/seame2026/piracer/Head_Unit_jun/src/media -I/home/seame2026/piracer/Head_Unit_jun/src/led -isystem /usr/include/aarch64-linux-gnu/qt5 -isystem /usr/include/aarch64-linux-gnu/qt5/QtCore -isystem /usr/lib/aarch64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/aarch64-linux-gnu/qt5/QtWidgets -isystem /usr/include/aarch64-linux-gnu/qt5/QtGui -std=gnu++17 -fPIC -o CMakeFiles/head_unit.dir/head_unit_autogen/3YJK5W5UP7/qrc_headunit.cpp.o -c /home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/3YJK5W5UP7/qrc_headunit.cpp",
+  "file": "/home/seame2026/piracer/Head_Unit_jun/build_new/head_unit_autogen/3YJK5W5UP7/qrc_headunit.cpp",
+  "output": "CMakeFiles/head_unit.dir/head_unit_autogen/3YJK5W5UP7/qrc_headunit.cpp.o"
+}
+]
