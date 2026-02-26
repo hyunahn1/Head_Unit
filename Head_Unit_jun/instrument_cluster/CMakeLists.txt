@@ -12,6 +12,14 @@ set(CMAKE_AUTORCC ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets SerialPort)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets SerialPort)
 
+# VSOMEIP (optional)
+find_path(VSOMEIP_INCLUDE_DIR vsomeip/vsomeip.hpp)
+find_library(VSOMEIP_LIBRARY NAMES vsomeip3)
+if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
+    message(STATUS "VSOMEIP found - gear IPC enabled")
+    add_compile_definitions(IC_HAS_VSOMEIP)
+endif()
+
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_standard_project_setup()
 endif()
@@ -50,6 +58,7 @@ set(SOURCES
     src/serial/SerialReader.cpp
     src/utils/DataProcessor.cpp
     src/utils/CalibrationManager.cpp
+    src/ipc/VSomeIPGearReceiver.cpp
 )
 
 set(HEADERS
@@ -60,6 +69,7 @@ set(HEADERS
     src/serial/SerialReader.h
     src/utils/DataProcessor.h
     src/utils/CalibrationManager.h
+    src/ipc/VSomeIPGearReceiver.h
 )
 
 # Qt resources
@@ -90,6 +100,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::SerialPort
 )
 
+if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${VSOMEIP_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${VSOMEIP_LIBRARY})
+endif()
+
 if(APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -102,6 +117,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/src/serial
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ipc
 )
 
 # Install

@@ -22,6 +22,7 @@
 #include "ipc/MockVehicleDataProvider.h"
 #include "ipc/GearStateManager.h"
 #include "ipc/IVehicleDataProvider.h"
+#include "ipc/VSomeIPClient.h"
 #include "led/MockLedController.h"
 
 #include <QVBoxLayout>
@@ -30,6 +31,10 @@
 #include <QEasingCurve>
 #include <QApplication>
 #include <QScreen>
+#include <QTimer>
+#include <QSaveFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -49,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_ambientScreen(nullptr)
     , m_settingsScreen(nullptr)
     , m_vehicleData(nullptr)
+    , m_vsomeipClient(nullptr)
     , m_gearStateManager(nullptr)
     , m_ledController(nullptr)
     , m_ambientGlow(nullptr)
@@ -62,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_vehicleData      = new MockVehicleDataProvider(this);
     m_gearStateManager = new GearStateManager(this);
+    m_vsomeipClient     = new VSomeIPClient(this);
     m_ledController    = new MockLedController(this);
 
     setupUI();
@@ -167,6 +174,28 @@ void MainWindow::setupConnections()
             this, [this] {
         m_ambientGlow->clearGlow();
     });
+
+    // Gear publish via VSOMEIP (if available)
+    connect(m_gearStateManager, &GearStateManager::gearChanged,
+            this, [this](GearState gear, const QString &) {
+        if (m_vsomeipClient) {
+            m_vsomeipClient->publishGear(gear);
+        }
+    });
+
+    // Gear → snapshot for cluster motor direction
+    connect(m_gearStateManager, &GearStateManager::gearChanged,
+            this, [this](GearState gear, const QString &) {
+        writeDriveModeSnapshot(gear);
+    });
+
+    m_driveModeTimer = new QTimer(this);
+    m_driveModeTimer->setInterval(500);
+    connect(m_driveModeTimer, &QTimer::timeout, this, [this] {
+        writeDriveModeSnapshot(m_gearStateManager->gear());
+    });
+    m_driveModeTimer->start();
+    writeDriveModeSnapshot(m_gearStateManager->gear());
 }
 
 void MainWindow::onGearChanged()
@@ -357,4 +386,33 @@ void MainWindow::onTabChanged(int index)
     });
 
     group->start();
+}
+
+void MainWindow::writeDriveModeSnapshot(GearState gear)
+{
+    QString direction = "N";
+    switch (gear) {
+    case GearState::D:
+        direction = "F";
+        break;
+    case GearState::R:
+        direction = "R";
+        break;
+    case GearState::P:
+    case GearState::N:
+    default:
+        direction = "N";
+        break;
+    }
+
+    QJsonObject obj;
+    obj["direction"] = direction;
+
+    QSaveFile file("/tmp/piracer_drive_mode.json");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        return;
+    }
+    QJsonDocument doc(obj);
+    file.write(doc.toJson(QJsonDocument::Compact));
+    file.commit();
 }

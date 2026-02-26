@@ -130,6 +130,8 @@ GearScreen::GearScreen(GearStateManager *gearState, QWidget *parent)
     , m_ring(nullptr)
     , m_sourceLabel(nullptr)
     , m_btnP(nullptr), m_btnR(nullptr), m_btnN(nullptr), m_btnD(nullptr)
+    , m_neutralHoldTimer(new QTimer(this))
+    , m_neutralHoldTriggered(false)
 {
     setStyleSheet("background-color: #0D0D0F;");
     setupUI();
@@ -180,6 +182,22 @@ void GearScreen::setupUI()
     addBtn(m_btnN, 2);
     addBtn(m_btnD, 3);
 
+    m_neutralHoldTimer->setSingleShot(true);
+    m_neutralHoldTimer->setInterval(600);
+    connect(m_neutralHoldTimer, &QTimer::timeout, this, [this]() {
+        m_neutralHoldTriggered = true;
+        m_gearState->setGearFromTouch(GearState::N);
+    });
+    connect(m_btnN, &QPushButton::pressed, this, [this]() {
+        m_neutralHoldTriggered = false;
+        m_neutralHoldTimer->start();
+    });
+    connect(m_btnN, &QPushButton::released, this, [this]() {
+        if (m_neutralHoldTimer->isActive()) {
+            m_neutralHoldTimer->stop();
+        }
+    });
+
     vbox->addWidget(stripContainer);
 
     updateDisplay();
@@ -189,6 +207,10 @@ void GearScreen::onGearButtonClicked()
 {
     auto *btn = qobject_cast<QPushButton*>(sender());
     if (!btn) return;
+    if (btn == m_btnN) {
+        // Neutral requires hold; ignore simple click.
+        return;
+    }
     m_gearState->setGearFromTouch(static_cast<GearState>(btn->property("gearIndex").toInt()));
 }
 

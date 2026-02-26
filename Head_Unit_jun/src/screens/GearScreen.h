@@ -11,6 +11,7 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
+#include <QTimer>
 
 class GearStateManager;
 class GearRingDisplay;   // defined in GearScreen.cpp
@@ -36,6 +37,8 @@ private:
     QPushButton        *m_btnR;
     QPushButton        *m_btnN;
     QPushButton        *m_btnD;
+    QTimer             *m_neutralHoldTimer;
+    bool               m_neutralHoldTriggered;
 };
 
 #endif // GEARSCREEN_H

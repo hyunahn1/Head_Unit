@@ -12,6 +12,7 @@
 #include <QStackedWidget>
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
+#include "ipc/IVehicleDataProvider.h"
 
 class TabBar;
 class StatusBar;
@@ -28,6 +29,8 @@ class GlowOverlay;
 class IVehicleDataProvider;
 class GearStateManager;
 class ILedController;
+class VSomeIPClient;
+class QTimer;
 
 /**
  * @class MainWindow
@@ -50,6 +53,7 @@ private:
     void setupUI();
     void setupConnections();
     void applyStyles();
+    void writeDriveModeSnapshot(GearState gear);
 #ifndef HU_PRE_API
     void ensureYouTubeScreen();
     void releaseYouTubeScreen();  // 탭 떠날 때 WebEngine 해제
@@ -77,9 +81,11 @@ private:
     SettingsScreen *m_settingsScreen;
 
     IVehicleDataProvider *m_vehicleData;   // Mock or VSomeIPClient
+    VSomeIPClient *m_vsomeipClient;        // Gear publish
     GearStateManager *m_gearStateManager;
     ILedController *m_ledController;
     GlowOverlay *m_ambientGlow;            // Full-window ambient glow
+    QTimer *m_driveModeTimer;              // Periodic /tmp snapshot for cluster
     ReverseCameraWindow *m_reverseCamera;  // Shown when gear is R
     bool m_animating = false;              // Prevent overlapping slide animations
 

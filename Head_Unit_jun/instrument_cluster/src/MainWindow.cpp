@@ -11,12 +11,14 @@
 #include "BatteryWidget.h"
 #include "SerialReader.h"
 #include "DataProcessor.h"
+#include "ipc/VSomeIPGearReceiver.h"
 
 #include <QDateTime>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSaveFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QGraphicsOpacityEffect>
@@ -30,19 +32,21 @@ MainWindow::MainWindow(QWidget *parent)
     , m_speedometer(nullptr)
     , m_rpmGauge(nullptr)
     , m_batteryWidget(nullptr)
-    , m_forwardLabel(nullptr)
-    , m_parkingLabel(nullptr)
-    , m_backwardLabel(nullptr)
+    , m_gearPLabel(nullptr)
+    , m_gearRLabel(nullptr)
+    , m_gearNLabel(nullptr)
+    , m_gearDLabel(nullptr)
     , m_timeLabel(nullptr)
     , m_maxSpeedLabel(nullptr)
     , m_resetButton(nullptr)
     , m_serialReader(nullptr)
     , m_pythonProcess(nullptr)
     , m_dataProcessor(nullptr)
+    , m_vsomeipGear(nullptr)
     , m_maxSpeed(0.0f)
     , m_currentSpeed(0.0f)
-    , m_driveDirection("N")
-    , m_lastCenterMode("")
+    , m_gearMode("P")
+    , m_lastVsomeipGearMs(0)
     , m_centerModeOpacity(nullptr)
     , m_centerModeAnim(nullptr)
     , m_elapsedTimer(nullptr)
@@ -55,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Initialize components
     m_dataProcessor = new DataProcessor(this);
     m_serialReader = new SerialReader(this);
+    m_vsomeipGear = new VSomeIPGearReceiver(this);
     
     // Setup UI
     setupUI();
@@ -232,22 +237,26 @@ void MainWindow::setupUI()
     directionLayout->setContentsMargins(6, 6, 6, 6);
     directionLayout->setSpacing(5);
 
-    m_forwardLabel = new QLabel("F");
-    m_parkingLabel = new QLabel("P");
-    m_backwardLabel = new QLabel("R");
-    m_forwardLabel->setAlignment(Qt::AlignCenter);
-    m_parkingLabel->setAlignment(Qt::AlignCenter);
-    m_backwardLabel->setAlignment(Qt::AlignCenter);
-    m_forwardLabel->setFixedWidth(54);
-    m_parkingLabel->setFixedWidth(104);
-    m_backwardLabel->setFixedWidth(54);
+    m_gearPLabel = new QLabel("P");
+    m_gearRLabel = new QLabel("R");
+    m_gearNLabel = new QLabel("N");
+    m_gearDLabel = new QLabel("D");
+    m_gearPLabel->setAlignment(Qt::AlignCenter);
+    m_gearRLabel->setAlignment(Qt::AlignCenter);
+    m_gearNLabel->setAlignment(Qt::AlignCenter);
+    m_gearDLabel->setAlignment(Qt::AlignCenter);
+    m_gearPLabel->setFixedWidth(52);
+    m_gearRLabel->setFixedWidth(52);
+    m_gearNLabel->setFixedWidth(52);
+    m_gearDLabel->setFixedWidth(52);
+
     m_centerModeOpacity = new QGraphicsOpacityEffect(this);
     m_centerModeOpacity->setOpacity(1.0);
-    m_parkingLabel->setGraphicsEffect(m_centerModeOpacity);
 
-    directionLayout->addWidget(m_forwardLabel);
-    directionLayout->addWidget(m_parkingLabel);
-    directionLayout->addWidget(m_backwardLabel);
+    directionLayout->addWidget(m_gearPLabel);
+    directionLayout->addWidget(m_gearRLabel);
+    directionLayout->addWidget(m_gearNLabel);
+    directionLayout->addWidget(m_gearDLabel);
     rightLayout->addWidget(directionPanel, 0, Qt::AlignHCenter);
     rightLayout->addSpacing(12);
     
@@ -343,6 +352,11 @@ void MainWindow::setupConnections()
     // Serial data connection
     connect(m_serialReader, &SerialReader::speedDataReceived,
             this, &MainWindow::onSpeedDataReceived);
+
+    if (m_vsomeipGear) {
+        connect(m_vsomeipGear, &VSomeIPGearReceiver::gearReceived,
+                this, &MainWindow::onVSomeIPGearReceived);
+    }
     
     // Reset button
     connect(m_resetButton, &QPushButton::clicked,
@@ -463,25 +477,15 @@ void MainWindow::applyDynamicBackgroundTheme(const QString &mode)
     setStyleSheet(fullStyle);
 }
 
-void MainWindow::animateCenterMode(const QString &newMode)
+void MainWindow::animateGearBadge(QLabel *label, const QString &newMode)
 {
-    if (!m_parkingLabel || !m_centerModeOpacity) {
+    if (!label || !m_centerModeOpacity) {
         return;
     }
 
-    if (m_lastCenterMode.isEmpty()) {
-        m_lastCenterMode = newMode;
-        m_parkingLabel->setText(newMode);
-        m_centerModeOpacity->setOpacity(1.0);
-        return;
-    }
-
-    if (newMode == m_lastCenterMode) {
-        return;
-    }
-
-    m_lastCenterMode = newMode;
-    m_parkingLabel->setText(newMode);
+    int direction = 0;
+    if (newMode == "D") direction = -1;
+    else if (newMode == "R") direction = 1;
 
     if (m_centerModeAnim) {
         m_centerModeAnim->stop();
@@ -489,16 +493,18 @@ void MainWindow::animateCenterMode(const QString &newMode)
         m_centerModeAnim = nullptr;
     }
 
-    const QRect endRect = m_parkingLabel->geometry();
-    int direction = 0;
-    if (newMode == "F") direction = -1;
-    else if (newMode == "R") direction = 1;
+    if (direction == 0) {
+        return;
+    }
+
+    const QRect endRect = label->geometry();
     const QRect startRect = endRect.translated(direction * 16, 0);
 
-    m_parkingLabel->setGeometry(startRect);
+    label->setGraphicsEffect(m_centerModeOpacity);
+    label->setGeometry(startRect);
     m_centerModeOpacity->setOpacity(0.0);
 
-    auto *slideAnim = new QPropertyAnimation(m_parkingLabel, "geometry");
+    auto *slideAnim = new QPropertyAnimation(label, "geometry");
     slideAnim->setDuration(180);
     slideAnim->setStartValue(startRect);
     slideAnim->setEndValue(endRect);
@@ -524,6 +530,13 @@ void MainWindow::animateCenterMode(const QString &newMode)
 
 bool MainWindow::updateDirectionFromSnapshot()
 {
+    if (m_lastVsomeipGearMs > 0) {
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if ((now - m_lastVsomeipGearMs) < 2000) {
+            return false;
+        }
+    }
+
     QFileInfo directionInfo("/tmp/piracer_drive_mode.json");
     if (!directionInfo.exists()) {
         return false;
@@ -547,20 +560,67 @@ bool MainWindow::updateDirectionFromSnapshot()
     }
 
     const QString direction = doc.object().value("direction").toString().trimmed().toUpper();
-    if (direction.startsWith("R")) {
-        m_driveDirection = "R";
+    if (direction.startsWith("P")) {
+        setGearMode("P");
         return true;
     }
-    if (direction.startsWith("F")) {
-        m_driveDirection = "F";
+    if (direction.startsWith("R")) {
+        setGearMode("R");
+        return true;
+    }
+    if (direction.startsWith("D") || direction.startsWith("F")) {
+        setGearMode("D");
         return true;
     }
     if (direction.startsWith("N")) {
-        m_driveDirection = "N";
+        setGearMode("N");
         return true;
     }
 
     return false;
+}
+
+void MainWindow::setGearMode(const QString &gear)
+{
+    const QString cleaned = gear.trimmed().toUpper();
+    if (cleaned.isEmpty()) {
+        return;
+    }
+    if (m_gearMode == cleaned) {
+        return;
+    }
+    m_gearMode = cleaned;
+    writeDriveModeSnapshot(m_gearMode);
+    updateDirectionIndicators();
+}
+
+void MainWindow::onVSomeIPGearReceived(const QString &gear)
+{
+    m_lastVsomeipGearMs = QDateTime::currentMSecsSinceEpoch();
+    setGearMode(gear);
+}
+
+void MainWindow::writeDriveModeSnapshot(const QString &gear)
+{
+    QString direction = "N";
+    if (gear == "D") {
+        direction = "F";
+    } else if (gear == "R") {
+        direction = "R";
+    } else if (gear == "P" || gear == "N") {
+        direction = "N";
+    }
+
+    QJsonObject obj;
+    obj["direction"] = direction;
+
+    QSaveFile file("/tmp/piracer_drive_mode.json");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        return;
+    }
+    QJsonDocument doc(obj);
+    file.write(doc.toJson(QJsonDocument::Compact));
+    file.commit();
 }
 
 void MainWindow::onSpeedDataReceived(float pulsePerSec)
@@ -707,66 +767,24 @@ void MainWindow::applyDirectionIndicatorStyle(QLabel *label, bool active, const 
 
 void MainWindow::updateDirectionIndicators()
 {
-    // Option C: center large current mode + side hint modes.
-    QString current = "P";
-    if (m_driveDirection == "F") {
-        current = "F";
-    } else if (m_driveDirection == "R") {
-        current = "R";
-    }
+    const QString current = m_gearMode.isEmpty() ? "P" : m_gearMode;
 
-    QString leftHint = "F";
-    QString rightHint = "R";
-    QString activeColor = "#FFD34D";  // Parking default
-    if (current == "F") {
-        leftHint = "P";
-        rightHint = "R";
-        activeColor = "#00FF88";
+    QString modeForTheme = "P";
+    if (current == "D") {
+        modeForTheme = "F";
     } else if (current == "R") {
-        leftHint = "F";
-        rightHint = "P";
-        activeColor = "#FF5B6E";
+        modeForTheme = "R";
     }
+    applyDynamicBackgroundTheme(modeForTheme);
 
-    m_forwardLabel->setText(leftHint);
-    m_backwardLabel->setText(rightHint);
-    animateCenterMode(current);
-    applyDynamicBackgroundTheme(current);
+    applyDirectionIndicatorStyle(m_gearPLabel, current == "P", "#FFD34D");
+    applyDirectionIndicatorStyle(m_gearRLabel, current == "R", "#FF5B6E");
+    applyDirectionIndicatorStyle(m_gearNLabel, current == "N", "#FFD34D");
+    applyDirectionIndicatorStyle(m_gearDLabel, current == "D", "#00FF88");
 
-    m_forwardLabel->setStyleSheet(
-        "QLabel {"
-        "   background-color: #1A2940;"
-        "   color: #8FA6C2;"
-        "   border: 1px solid #2D4867;"
-        "   border-radius: 8px;"
-        "   font-family: 'Roboto Condensed';"
-        "   font-size: 10pt;"
-        "   font-weight: 600;"
-        "   padding: 2px 2px;"
-        "}"
-    );
-    m_backwardLabel->setStyleSheet(
-        "QLabel {"
-        "   background-color: #1A2940;"
-        "   color: #8FA6C2;"
-        "   border: 1px solid #2D4867;"
-        "   border-radius: 8px;"
-        "   font-family: 'Roboto Condensed';"
-        "   font-size: 10pt;"
-        "   font-weight: 600;"
-        "   padding: 2px 2px;"
-        "}"
-    );
-    m_parkingLabel->setStyleSheet(
-        "QLabel {"
-        "   background-color: " + activeColor + ";"
-        "   color: #08121F;"
-        "   border: 1px solid " + activeColor + ";"
-        "   border-radius: 8px;"
-        "   font-family: 'Roboto Condensed';"
-        "   font-size: 18pt;"
-        "   font-weight: 800;"
-        "   padding: 0px 2px;"
-        "}"
-    );
+    if (current == "R") {
+        animateGearBadge(m_gearRLabel, "R");
+    } else if (current == "D") {
+        animateGearBadge(m_gearDLabel, "D");
+    }
 }

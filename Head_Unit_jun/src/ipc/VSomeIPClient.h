@@ -12,6 +12,14 @@
 
 #include "IVehicleDataProvider.h"
 
+#ifdef HU_HAS_VSOMEIP
+#include <vsomeip/vsomeip.hpp>
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <thread>
+#endif
+
 /**
  * @class VSomeIPClient
  * @brief Subscribe: 0x8001 speed, 0x8002 gear, 0x8003 battery
@@ -25,6 +33,7 @@ class VSomeIPClient : public IVehicleDataProvider
 
 public:
     explicit VSomeIPClient(QObject *parent = nullptr);
+    ~VSomeIPClient() override;
 
     float speed() const override;
     GearState gear() const override;
@@ -40,6 +49,15 @@ private:
     float m_batteryVoltage;
     float m_batteryPercent;
     bool m_connected;
+
+#ifdef HU_HAS_VSOMEIP
+    std::shared_ptr<vsomeip::application> m_app;
+    std::mutex m_mutex;
+    std::thread m_worker;
+    std::atomic<bool> m_running{false};
+    std::atomic<bool> m_registered{false};
+    void onState(vsomeip::state_type_e state);
+#endif
 };
 
 #endif // VSOMEIPCLIENT_H

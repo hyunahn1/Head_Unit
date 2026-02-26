@@ -12,6 +12,14 @@ set(CMAKE_AUTORCC ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets)
 
+# VSOMEIP (optional)
+find_path(VSOMEIP_INCLUDE_DIR vsomeip/vsomeip.hpp)
+find_library(VSOMEIP_LIBRARY NAMES vsomeip3)
+if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
+    message(STATUS "VSOMEIP found - gear IPC enabled")
+    add_compile_definitions(HU_HAS_VSOMEIP)
+endif()
+
 # Multimedia: optional
 find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Multimedia)
 if(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
@@ -68,6 +76,7 @@ list(APPEND SOURCES
     src/screens/SettingsScreen.cpp
     src/ipc/MockVehicleDataProvider.cpp
     src/ipc/GearStateManager.cpp
+    src/ipc/VSomeIPClient.cpp
     src/media/MediaPlayer.cpp
     src/media/PlaylistModel.cpp
     src/led/MockLedController.cpp
@@ -92,6 +101,7 @@ list(APPEND HEADERS
     src/ipc/IVehicleDataProvider.h
     src/ipc/MockVehicleDataProvider.h
     src/ipc/GearStateManager.h
+    src/ipc/VSomeIPClient.h
     src/media/MediaPlayer.h
     src/media/PlaylistModel.h
     src/led/ILedController.h
@@ -128,6 +138,9 @@ endif()
 if(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
     list(APPEND _hu_link_libs Qt${QT_VERSION_MAJOR}::Multimedia)
 endif()
+if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
+    list(APPEND _hu_link_libs ${VSOMEIP_LIBRARY})
+endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${_hu_link_libs})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -138,6 +151,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/media
     ${CMAKE_CURRENT_SOURCE_DIR}/src/led
 )
+if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${VSOMEIP_INCLUDE_DIR})
+endif()
 
 if(HU_PRE_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HU_PRE_API=1)
