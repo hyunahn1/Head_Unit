@@ -1,0 +1,14 @@
+[Unit]
+Description=PiRacer Head Unit Shell
+After=network.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
+ExecStart=/usr/bin/hu_shell
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

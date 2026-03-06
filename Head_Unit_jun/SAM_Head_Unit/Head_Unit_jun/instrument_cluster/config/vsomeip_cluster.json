@@ -1,0 +1,20 @@
+{
+    "unicast": "127.0.0.1",
+    "logging": { "level": "warning", "console": "false" },
+    "applications": [{ "name": "InstrumentCluster", "id": "0x1001" }],
+    "services": [
+        {
+            "service": "0x1234",
+            "instance": "0x0001",
+            "reliable": { "port": "30509" },
+            "unreliable": "30510"
+        }
+    ],
+    "routing": "InstrumentCluster",
+    "service-discovery": {
+        "enable": "true",
+        "multicast": "224.0.0.1",
+        "port": "30490",
+        "protocol": "udp"
+    }
+}
