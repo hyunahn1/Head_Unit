@@ -1,0 +1,4 @@
+SANITY_VERSION 1
+TMPDIR /home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp
+SSTATE_DIR /home/seame/SEA_ME/Head_Unit/yocto/build-rpi/sstate-cache
+NATIVELSBSTRING ubuntu-24.04

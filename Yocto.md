@@ -328,3 +328,421 @@ git rm -f --cached yocto/poky
 
 *   **방법 B: 서브모듈(Submodule)로 깔끔하게 링크만 걸어서 관리하기 (정석)**
     기존에 다운받은 폴더들을 완전히 삭제한 후, `git submodule add <url> <경로>` 명령어를 사용하여 서브모듈로 다시 등록합니다. 이렇게 하면 깃허브에는 코드가 아닌 해당 레이어의 '특정 버전(커밋)' 정보만 깔끔하게 저장됩니다.
+
+---
+
+## 10. 우리 실습 로그 (Head_Unit 프로젝트 실제 진행 기록)
+
+이 섹션은 "이론"이 아니라, 현재 저장소에서 우리가 실제로 실행한 명령과 결과를 기록하는 학습 노트입니다.  
+앞으로 진행할 때마다 아래 형식으로 계속 추가합니다.
+
+### 10.1 오늘까지 진행한 내용 (2026-03-06)
+
+#### A) 환경 복구 및 기본 검증
+
+1. AppArmor 제한 완화 (BitBake 실행 가능 상태로 전환)
+```bash
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+- 왜 했는가: Ubuntu 24.04 보안 정책 때문에 BitBake 파싱이 막히는 상황을 해제하기 위함.
+- 실제 확인 결과: `kernel.apparmor_restrict_unprivileged_userns = 0`
+
+2. Yocto build 환경 활성화
+```bash
+source yocto/poky/oe-init-build-env yocto/build
+```
+- 왜 했는가: 현재 셸에 BitBake/Yocto 환경변수를 로드하기 위함.
+- 의미: 이 명령을 실행한 터미널에서만 `bitbake`, `bitbake-layers`를 정상 사용 가능.
+
+3. 레이어 등록 상태 확인
+```bash
+bitbake-layers show-layers
+```
+- 실제 결과: `meta-piracer`, `meta-raspberrypi`, `meta-qt5` 포함 레이어 인식 성공.
+- 의미: `bblayers.conf` 구성은 정상.
+
+#### B) 실제 오류 해결 (노트북 변경 이슈)
+
+1. 발생한 오류
+```text
+Unable to get checksum for headunit SRC_URI entry Head_Unit_jun: file could not be found
+... searched: /home/seame2026/piracer/Head_Unit_jun
+```
+- 원인: 이전 노트북의 절대경로가 레시피에 하드코딩되어 있었음.
+
+2. 수정한 핵심 포인트 (`meta-piracer/recipes-hu/headunit/headunit_git.bb`)
+- 기존: `/home/seame2026/...` 절대경로 사용
+- 변경: 개발 단계에서는 `externalsrc`로 로컬 워크트리를 직접 참조
+
+```bitbake
+SRC_URI = "file://hu-shell.service"
+inherit cmake_qt5 pkgconfig systemd externalsrc
+EXTERNALSRC = "${TOPDIR}/../../Head_Unit_jun"
+S = "${EXTERNALSRC}"
+B = "${WORKDIR}/build"
+```
+
+- 왜 좋은가: 노트북이 바뀌어도 저장소 구조만 같으면 재사용 가능.
+- 왜 추가로 `cmake_qt5`를 썼는가: Qt5 CMake 타겟(`Qt5::Core`) 인식에 필요한 Yocto 변수(`OE_QMAKE_PATH_*`)를 자동 주입하기 위함.
+
+#### C) 레시피 인식/소스 수집 성공
+
+1. 레시피 조회
+```bash
+bitbake-layers show-recipes headunit
+```
+- 실제 결과: `headunit: meta-piracer git` 매칭 성공.
+
+2. fetch 단계 실행
+```bash
+bitbake headunit -c fetch
+```
+- 실제 결과: `Tasks Summary ... all succeeded.`
+- 의미: `do_fetch` 성공, 즉 소스 경로 문제 해결 완료.
+
+#### D) RPi 타겟 build 디렉터리 분리 시작
+
+1. 새 빌드 디렉터리 생성/진입
+```bash
+source yocto/poky/oe-init-build-env yocto/build-rpi
+```
+
+2. `build-rpi`에 프로젝트 레이어 등록
+- `meta-oe`, `meta-python`, `meta-multimedia`, `meta-networking`, `meta-raspberrypi`, `meta-qt5`, `meta-piracer`
+
+3. 현재 상태
+- `bitbake-layers show-layers`에서 레이어 목록 정상 확인.
+- 다음 확인 포인트: `conf/local.conf`의 `MACHINE` 값을 `raspberrypi4`로 고정했는지 점검.
+
+#### E) `do_configure` 실패 원인 분석 및 해결 (RPi 컨텍스트)
+
+1. 첫 실패 로그 핵심
+```text
+.../Head_Unit_jun does not appear to contain CMakeLists.txt
+```
+- 원인: `file://` 디렉터리 fetch 결과가 레시피가 기대한 소스 루트와 달라 `S` 경로가 비어 있는 디렉터리를 가리킴.
+
+2. 수정 후 두 번째 실패 로그 핵심
+```text
+Target "hu_core" links to Qt5::Core but the target was not found
+```
+- 원인: 일반 `cmake` 클래스만 사용하면 meta-qt5의 CMake 통합 변수 주입이 부족할 수 있음.
+
+3. 최종 해결
+- `inherit cmake` -> `inherit cmake_qt5` 변경
+- 결과:
+```bash
+bitbake headunit -c configure
+```
+`Tasks Summary ... all succeeded.` 로 통과 확인.
+
+#### F) `do_compile` 성공 (RPi 컨텍스트)
+
+1. 실행 명령
+```bash
+bitbake headunit -c compile
+```
+
+2. 핵심 로그
+```text
+NOTE: headunit: compiling from external source tree .../Head_Unit_jun
+NOTE: Tasks Summary: ... all succeeded.
+```
+
+3. 의미
+- `externalsrc`로 연결된 실제 프로젝트 소스를 기준으로 컴파일 태스크가 정상 수행됨.
+- 현재 레시피는 `raspberrypi4` 타겟에서 `fetch -> configure -> compile` 단계까지 검증 완료.
+
+#### G) `do_install` 실패 원인 분석 및 해결
+
+1. 실패 로그 핵심
+```text
+file INSTALL cannot find ".../Head_Unit_jun/run_gamepad_service.sh"
+```
+- 원인: `CMakeLists.txt`에서 `run_gamepad_service.sh`를 필수 설치 대상으로 지정했지만, 저장소에 해당 파일이 없음.
+
+2. 조치 내용 (`Head_Unit_jun/CMakeLists.txt`)
+- 기존:
+```cmake
+install(PROGRAMS run_gamepad_service.sh DESTINATION bin)
+```
+- 변경:
+```cmake
+if(EXISTS "${CMAKE_SOURCE_DIR}/run_gamepad_service.sh")
+    install(PROGRAMS "${CMAKE_SOURCE_DIR}/run_gamepad_service.sh" DESTINATION bin)
+else()
+    message(STATUS "run_gamepad_service.sh not found - skip install")
+endif()
+```
+
+3. 재검증 결과
+```bash
+bitbake headunit -c install -f
+```
+- `do_install: Succeeded` 확인.
+- 의미: 설치 단계에서 누락 파일로 중단되던 문제가 해소됨.
+
+#### H) 레거시 게임패드 서비스 스크립트 정리
+
+1. 현재 기준 정리
+- `run_gamepad_service.sh`는 현재 `Head_Unit_jun`에 존재하지 않음.
+- 게임패드 입력/모터 제어는 `instrument_cluster/python/piracer_bridge.py`로 통합됨.
+- 실행 시작점은 `Head_Unit_jun/run_cluster.sh`이며, 클러스터 실행 중 `piracer_bridge.py`가 자동 기동됨.
+
+2. 코드 정리 내용
+- `Head_Unit_jun/CMakeLists.txt`의 레거시 설치 흔적 제거:
+```cmake
+install(PROGRAMS run_gamepad_service.sh DESTINATION bin)
+```
+- 이유: 더 이상 사용하지 않는 파일에 대한 설치 의존을 제거해 혼동/빌드 리스크를 방지.
+
+#### I) `bitbake headunit` 최종 성공 (RPi 타겟)
+
+1. 실행 명령
+```bash
+bitbake headunit
+```
+
+2. 핵심 로그
+```text
+MACHINE = "raspberrypi4"
+NOTE: headunit: compiling from external source tree .../Head_Unit_jun
+NOTE: Tasks Summary: Attempted 2593 tasks ... all succeeded.
+```
+
+3. 경고 메시지 해석
+```text
+... do_install is tainted from a forced run
+```
+- 의미: 이전에 `-f`(강제 실행)로 태스크를 돌린 이력이 있다는 알림.
+- 치명 오류가 아니며, 이번 빌드 성공 여부와는 별개.
+
+#### J) `externalsrc` checksum 경고(oe-logs/oe-workdir) 정리
+
+1. 발생 경고
+```text
+Unable to get checksum for headunit SRC_URI entry oe-logs ...
+Unable to get checksum for headunit SRC_URI entry oe-workdir ...
+```
+
+2. 원인
+- `externalsrc` 사용 시 내부 helper symlink(`oe-workdir`, `oe-logs`)를 체크섬 계산 과정에서 참조하며, 소스 트리에 해당 이름이 없으면 경고가 출력될 수 있음.
+- 빌드 자체 실패 원인은 아니었고, 실제 `Tasks Summary`는 성공 상태였음.
+
+3. 조치
+`headunit_git.bb`에 아래 설정 추가:
+```bitbake
+EXTERNALSRC_SYMLINKS = ""
+```
+
+4. 재검증
+```bash
+bitbake headunit
+```
+- 경고 없이 `do_package_write_rpm` 포함 전체 태스크 성공 확인.
+
+#### K) 완전 캐시 재빌드 확인 + RPM 산출물 확인
+
+1. 캐시 상태 재검증
+```bash
+bitbake headunit
+```
+핵심 로그:
+```text
+Sstate summary: Wanted 0 ... Missed 0 ... Current 938 (100% complete)
+Tasks Summary: Attempted 2593 tasks of which 2593 didn't need to be rerun and all succeeded.
+```
+- 의미: 현재 변경사항 기준으로 재빌드가 필요 없고, 캐시 상태가 매우 안정적임.
+
+2. RPM 산출물 확인
+```text
+yocto/build-rpi/tmp/deploy/rpm/cortexa7t2hf_neon_vfpv4/
+  headunit-git-r0.cortexa7t2hf_neon_vfpv4.rpm
+  headunit-dev-git-r0.cortexa7t2hf_neon_vfpv4.rpm
+  headunit-dbg-git-r0.cortexa7t2hf_neon_vfpv4.rpm
+  headunit-src-git-r0.cortexa7t2hf_neon_vfpv4.rpm
+```
+- 의미: 레시피 결과물이 패키지 피드(rpm)까지 정상 배포됨.
+
+#### L) pkgdata 등록 검증 완료
+
+1. 실행 명령
+```bash
+oe-pkgdata-util list-pkgs | grep headunit
+```
+
+2. 실제 출력
+```text
+headunit
+headunit-dbg
+headunit-dev
+headunit-src
+```
+
+3. 의미
+- 패키지 산출물뿐 아니라 pkgdata 인덱스에도 `headunit` 계열이 정상 등록됨.
+- 이후 이미지 레시피에서 `IMAGE_INSTALL += "headunit"` 형태로 포함할 준비가 끝남.
+
+#### M) Xen 지향 분리 구조 파일 추가 (Dom0 / DomU-HU / DomU-Cluster)
+
+1. 추가한 앱 레시피
+- `yocto/meta-piracer/recipes-cluster/instrument-cluster/instrument-cluster_git.bb`
+- `yocto/meta-piracer/recipes-cluster/instrument-cluster/files/piracer-cluster.service`
+
+핵심 포인트:
+- `instrument_cluster`를 `externalsrc`로 연결
+- `cmake_qt5` + `systemd` 상속
+- 설치 대상: `PiRacerDashboard`, `python/*.py`, `config/*.json`, `piracer-cluster.service`
+
+2. 추가한 이미지 레시피
+- `yocto/meta-piracer/recipes-core/images/piracer-dom0-image.bb`
+- `yocto/meta-piracer/recipes-core/images/piracer-hu-image.bb`
+- `yocto/meta-piracer/recipes-core/images/piracer-cluster-image.bb`
+
+3. 레시피 인식 검증
+```bash
+bitbake-layers show-recipes instrument-cluster piracer-hu-image piracer-cluster-image piracer-dom0-image
+```
+실제 결과:
+- `instrument-cluster` 매칭 성공
+- `piracer-dom0-image`, `piracer-hu-image`, `piracer-cluster-image` 매칭 성공
+
+4. 의미
+- Xen 목표 구조(도메인별 이미지 분리)를 Yocto 레이어에 반영할 기본 뼈대를 완료.
+- 다음 단계는 각 이미지에 필요한 패키지(예: xen 관련, vsomeip, 정책 패키지)를 도메인별로 구체화하는 작업.
+
+#### N) 이미지 빌드 의존성 에러 해결 (restricted license)
+
+1. 발생 에러
+```text
+Nothing RPROVIDES 'linux-firmware-rpidistro-bcm43455'
+... skipped: Has a restricted license 'synaptics-killswitch'
+which is not listed in your LICENSE_FLAGS_ACCEPTED.
+```
+
+2. 원인
+- `meta-raspberrypi`의 firmware 패키지가 제한 라이선스 플래그를 요구함.
+- `piracer-hu-image` / `piracer-cluster-image`가 `packagegroup-base-extended` 경로로 해당 firmware에 의존.
+
+3. 조치 (`build-rpi/conf/local.conf`)
+```conf
+LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
+```
+
+4. 결과
+- 이전의 `Nothing RPROVIDES linux-firmware-rpidistro-bcm43455` 의존성 해석 에러는 해소됨.
+
+#### O) 커널 빌드 중 `PermissionError: /proc/self/uid_map` 에러
+
+1. 발생 에러
+```text
+PermissionError: [Errno 1] Operation not permitted
+... bb.utils.disable_network(...)
+... with open("/proc/self/uid_map", "w")
+```
+
+2. 원인
+- BitBake worker가 네트워크 격리를 위해 user namespace를 사용할 때, 호스트 OS 보안 정책(AppArmor + userns 제한)에 의해 차단됨.
+- 증상상 `linux-raspberrypi:do_compile`에서 터졌지만, 실제 본질은 커널 레시피 자체 문제가 아니라 "호스트 권한/보안 정책" 문제.
+
+3. 해결 절차 (런타임/영구)
+```bash
+# 1) 즉시 해제 (재부팅 전까지 유효)
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+# 2) 확인
+sysctl kernel.apparmor_restrict_unprivileged_userns
+```
+
+필요 시 영구 설정:
+```bash
+echo 'kernel.apparmor_restrict_unprivileged_userns = 0' | sudo tee /etc/sysctl.d/99-yocto-userns.conf
+sudo sysctl --system
+```
+
+4. 재시도
+```bash
+source yocto/poky/oe-init-build-env yocto/build-rpi
+bitbake piracer-hu-image
+bitbake piracer-cluster-image
+```
+
+#### P) 재시도 최종 성공 + 이미지 산출물 확인
+
+1. 재시도 로그 결과
+- `bitbake piracer-hu-image`: `Tasks Summary ... all succeeded.`
+- `bitbake piracer-cluster-image`: `Tasks Summary ... all succeeded.`
+
+2. 참고할 점
+- `source: no such file or directory: yocto/poky/oe-init-build-env` 메시지는 "현재 디렉터리 기준 상대경로" 문제였음.
+- 직후 `bitbake` 명령이 정상 실행되었고, 결과도 성공이므로 최종 상태에는 영향 없음.
+
+3. 실제 이미지 산출물 (raspberrypi4)
+```text
+yocto/build-rpi/tmp/deploy/images/raspberrypi4/
+  piracer-hu-image-raspberrypi4.rootfs.wic.bz2
+  piracer-hu-image-raspberrypi4.rootfs.ext3
+  piracer-hu-image-raspberrypi4.rootfs.tar.bz2
+  piracer-cluster-image-raspberrypi4.rootfs.wic.bz2
+  piracer-cluster-image-raspberrypi4.rootfs.ext3
+  piracer-cluster-image-raspberrypi4.rootfs.tar.bz2
+  ... (manifest, spdx, bmap 등 부가 산출물 포함)
+```
+
+#### Q) 타겟 실행 시 Qt platform plugin 초기화 실패 대응
+
+1. 현상
+```text
+no Qt platform plugin could be initialized
+... aborted
+```
+
+2. 원인 추정
+- 앱 바이너리는 존재하지만, 이미지에 Qt 플랫폼 플러그인 런타임 패키지가 빠져 있을 때 주로 발생.
+
+3. 패키지 피드 확인
+- 빌드 산출물에 `qtbase-plugins-...rpm` 패키지가 존재함을 확인.
+
+4. 조치
+- 이미지 레시피에 `qtbase-plugins`를 명시적으로 추가:
+  - `piracer-hu-image.bb`
+  - `piracer-cluster-image.bb`
+
+5. 후속
+- 이미지 재빌드/재플래시 후 `QT_QPA_PLATFORM=eglfs` 또는 `QT_QPA_PLATFORM=linuxfb`로 실행 재확인.
+
+---
+
+### 10.2 지금까지 배운 핵심 (실습 기반)
+
+1. **Yocto 에러는 대부분 "경로/환경/레이어" 문제부터 본다.**
+2. **노트북 교체 시 절대경로 하드코딩은 거의 100% 문제를 만든다.**
+3. **`show-layers` -> `show-recipes` -> `-c fetch` 순서가 가장 안전한 디버깅 루틴이다.**
+4. **QEMU용(`qemux86-64`)과 RPi용(`raspberrypi4`)은 목적이 다르다.**
+   - QEMU: 빠른 개발/검증
+   - RPi: 실제 배포 이미지
+
+---
+
+### 10.3 다음에 바로 할 작업 (실습 체크리스트)
+
+1. `kernel.apparmor_restrict_unprivileged_userns` 값 확인/적용
+2. `bitbake piracer-hu-image` / `bitbake piracer-cluster-image` 재실행
+3. 이미지 산출물 확인 (`tmp/deploy/images/<machine>/`)
+4. Dom0 이미지에 Xen/백엔드 패키지 정책 추가
+
+---
+
+### 10.4 실습 로그 템플릿 (앞으로 계속 추가)
+
+```md
+#### [YYYY-MM-DD] Step N - 작업 제목
+- 목표:
+- 명령어:
+  - `...`
+- 결과:
+  - 성공/실패
+  - 핵심 로그
+- 배운 점:
+- 다음 액션:
+```

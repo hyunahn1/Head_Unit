@@ -1,19 +1,19 @@
-SUMMARY = "PiRacer Head Unit"
-DESCRIPTION = "Qt-based PiRacer Head Unit shell and modules"
+SUMMARY = "PiRacer Instrument Cluster"
+DESCRIPTION = "Qt-based PiRacer instrument cluster dashboard"
 LICENSE = "CLOSED"
 
-SRC_URI = "file://hu-shell.service"
+SRC_URI = "file://piracer-cluster.service"
 
 inherit cmake_qt5 pkgconfig systemd externalsrc
 
 # Use the repository's local source tree during development.
-EXTERNALSRC = "${TOPDIR}/../../Head_Unit_jun"
+EXTERNALSRC = "${TOPDIR}/../../Head_Unit_jun/instrument_cluster"
 S = "${EXTERNALSRC}"
 B = "${WORKDIR}/build"
 # Suppress checksum warnings for externalsrc helper symlinks (oe-workdir/oe-logs).
 EXTERNALSRC_SYMLINKS = ""
 
-DEPENDS += "qtbase"
+DEPENDS += "qtbase qtserialport"
 
 EXTRA_OECMAKE += " \
     -DCMAKE_BUILD_TYPE=Release \
@@ -21,13 +21,13 @@ EXTRA_OECMAKE += " \
 
 do_install:append() {
     install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/hu-shell.service ${D}${systemd_system_unitdir}/hu-shell.service
+    install -m 0644 ${WORKDIR}/piracer-cluster.service ${D}${systemd_system_unitdir}/piracer-cluster.service
 }
 
 FILES:${PN} += " \
     ${bindir}/* \
-    ${systemd_system_unitdir}/hu-shell.service \
+    ${systemd_system_unitdir}/piracer-cluster.service \
 "
 
-SYSTEMD_SERVICE:${PN} = "hu-shell.service"
+SYSTEMD_SERVICE:${PN} = "piracer-cluster.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"

@@ -9,8 +9,10 @@
 
 int main(int argc, char *argv[])
 {
-    // Wayland은 창 절대 위치를 지원하지 않으므로 XWayland(xcb)로 실행
-    qputenv("QT_QPA_PLATFORM", "xcb");
+    // Use eglfs for embedded RPi4 (no X11/Wayland available)
+    if (qgetenv("QT_QPA_PLATFORM").isEmpty()) {
+        qputenv("QT_QPA_PLATFORM", "eglfs");
+    }
 
     QApplication app(argc, argv);
     app.setApplicationName("PiRacer Head Unit Shell");
