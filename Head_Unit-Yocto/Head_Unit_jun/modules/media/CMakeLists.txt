@@ -22,13 +22,13 @@ target_include_directories(hu_module_media PRIVATE
 
 target_link_libraries(hu_module_media PRIVATE
     hu_core
-    Qt6::Core
-    Qt6::Widgets
-    Qt6::Network
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Network
 )
 
-if(Qt6Multimedia_FOUND)
-    target_link_libraries(hu_module_media PRIVATE Qt6::Multimedia)
+if(Qt5Multimedia_FOUND)
+    target_link_libraries(hu_module_media PRIVATE Qt5::Multimedia)
 endif()
 
 install(TARGETS hu_module_media RUNTIME DESTINATION bin)

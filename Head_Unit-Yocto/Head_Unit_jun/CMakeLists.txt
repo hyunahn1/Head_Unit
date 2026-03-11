@@ -8,20 +8,20 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# ── Qt6 ────────────────────────────────────────────────
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
+# ── Qt5 ────────────────────────────────────────────────
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets Network)
 
 # ── 옵셔널 컴포넌트 ────────────────────────────────────────────────────
-find_package(Qt6 OPTIONAL_COMPONENTS Multimedia)
-if(Qt6Multimedia_FOUND)
+find_package(Qt5 OPTIONAL_COMPONENTS Multimedia)
+if(Qt5Multimedia_FOUND)
     message(STATUS "Qt Multimedia found - real audio enabled")
     add_compile_definitions(HU_MULTIMEDIA_AVAILABLE)
 else()
     message(STATUS "Qt Multimedia NOT found - stub audio")
 endif()
 
-find_package(Qt6 OPTIONAL_COMPONENTS WebEngineWidgets)
-if(Qt6WebEngineWidgets_FOUND)
+find_package(Qt5 OPTIONAL_COMPONENTS WebEngineWidgets)
+if(Qt5WebEngineWidgets_FOUND)
     message(STATUS "Qt WebEngineWidgets found - YouTube/Navigation WebView enabled")
     add_compile_definitions(HU_WEBENGINE_AVAILABLE)
 else()

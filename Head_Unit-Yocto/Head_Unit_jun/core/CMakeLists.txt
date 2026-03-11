@@ -33,8 +33,8 @@ target_include_directories(hu_core PUBLIC
 )
 
 target_link_libraries(hu_core PUBLIC
-    Qt6::Core
-    Qt6::Network    # QLocalSocket / QLocalServer
+    Qt5::Core
+    Qt5::Network    # QLocalSocket / QLocalServer
 )
 if(VSOMEIP_INCLUDE_DIR AND VSOMEIP_LIBRARY)
     target_include_directories(hu_core PUBLIC ${VSOMEIP_INCLUDE_DIR})

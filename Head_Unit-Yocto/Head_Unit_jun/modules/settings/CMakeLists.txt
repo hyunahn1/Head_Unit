@@ -17,9 +17,9 @@ target_include_directories(hu_module_settings PRIVATE
 
 target_link_libraries(hu_module_settings PRIVATE
     hu_core
-    Qt6::Core
-    Qt6::Widgets
-    Qt6::Network
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Network
 )
 
 install(TARGETS hu_module_settings RUNTIME DESTINATION bin)
