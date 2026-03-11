@@ -1,0 +1,32 @@
+[submodule "Head_Unit_jun/yocto/poky"]
+	path = Head_Unit_jun/yocto/poky
+	url = git://git.yoctoproject.org/poky
+	branch = scarthgap
+[submodule "Head_Unit_jun/yocto/meta-openembedded"]
+	path = Head_Unit_jun/yocto/meta-openembedded
+	url = git://git.openembedded.org/meta-openembedded
+	branch = scarthgap
+[submodule "Head_Unit_jun/yocto/meta-qt5"]
+	path = Head_Unit_jun/yocto/meta-qt5
+	url = https://github.com/meta-qt5/meta-qt5.git
+	branch = scarthgap
+[submodule "Head_Unit_jun/yocto/meta-raspberrypi"]
+	path = Head_Unit_jun/yocto/meta-raspberrypi
+	url = git://git.yoctoproject.org/meta-raspberrypi
+	branch = scarthgap
+[submodule "yocto/poky"]
+	path = yocto/poky
+	url = git://git.yoctoproject.org/poky
+	branch = scarthgap
+[submodule "yocto/meta-openembedded"]
+	path = yocto/meta-openembedded
+	url = git://git.openembedded.org/meta-openembedded
+	branch = scarthgap
+[submodule "yocto/meta-qt5"]
+	path = yocto/meta-qt5
+	url = https://github.com/meta-qt5/meta-qt5.git
+	branch = scarthgap
+[submodule "yocto/meta-raspberrypi"]
+	path = yocto/meta-raspberrypi
+	url = git://git.yoctoproject.org/meta-raspberrypi
+	branch = scarthgap

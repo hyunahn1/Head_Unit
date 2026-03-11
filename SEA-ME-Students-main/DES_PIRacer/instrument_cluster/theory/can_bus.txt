@@ -1,0 +1,161 @@
+2 kabels
+                CAN high     CAN Low
+dominant(0)     ~3.5V         ~1.5V
+recessive       ~2.5V         ~2.5V
+
+every message has an ID
+0x100 Motor RPM
+0x200 Speed
+0x300 steeringangle
+
+multiple systems can send a message at the same time
+-> lower ID wins
+    -> ABS sends ID 0x050 & steeringangle sends 0x300 -> ABS wins
+
+CAN frame usually contains:
+ID: message type and priority
+Control Field: length of the message
+Data Field: up to 8 bytes
+CRC: Error detection
+ACK: acknowledgement from receivers
+END OF FRAME
+
+
+and the 2 end of the CAN -> 120-ohm resistors
+    -> called termination resistors
+        -> prevent signal reflections
+        -> keep communication stable
+    -> 2 resistors in parallel = 60 ohm
+
+
+CAN frame structure example:
+
+SOF | Identifier | RTR | IDE | r0 | DLC | DATA | CRC | EOF
+
+SOF = Start of frame
+	» 1 dominant bit
+	» tells all nodes that the message begins
+
+Identifier
+	» 11 bits
+	» determines  priority and meaning of the message
+	-> low ID = high priority
+
+RTR =  Remote Transmission Request
+	» can be 0 -> data frame or 1 -> remote request frame
+		» remote request frame ask annother node to send data
+			» a module could request Engine Rpm from annother ECU
+
+IDE = Identifier Extension
+	» defines ID length
+		» 0 -> standard frame(11-bit ID)
+		» 1 -> extended frame(29-bit ID)
+	» extended identifiers are common in modern vehicles
+
+DLC = Data Lentgh Identifier
+	» defines how many bytes can follow
+		» classic can allows: 0-8 bytes
+
+DATA = contains the actual Payload
+	» Example  (8-Bytes), Scaling: 0.01km/h 
+		» ID: 0x1A0
+		» DATA: 00 7D 00 00 00 00 00 00
+		» 0x007D = 125 -> 125 x 0.01 = 1.25km/h
+
+CRC =  Cyclic Redundancy Check
+	» used to detech transmission Errors
+	» CAN uses a 15-bit CRC polynomial
+	» all nodes verify it
+	» if the CRC fails -> error frame is transmitted
+
+
+ACK = Acknowledgement
+	» every receiver checks frame
+	» if atleast one node received it correctly it will send an ACK bit
+	» if no ACK appears the sender will resend the message
+
+EOF = End of frame
+	» 7 recessive bits indicating that the message is finished
+
+
+Bitwise Arbitration:
+	» Dominant bit(0) overrides recessive Bit(1)
+	» Example: a: 100100 and b: 100110
+		» both transmit, 5 bit b sees, that he send 1 but the bus is 0.
+			» stops transmitting 
+		» Non destructive Arbitration -> no data collisions
+
+Bit Stuffing:
+	» used to keep synchronization between bits
+	» after five identical bits the transmitter will insert a bit of opposite polarity
+		» original: 111111 | transmitted: 11111 0 1
+	» receivers will automatically remove the stuffed bit
+
+
+Error Detection:
+	» CRC check:
+		» detects corrupted frames
+	» Bit Monitoring:
+		» nodes verify that the transmitted message is the same they send
+	» Bit Stuffing check:
+		» If stuffing violated ->error
+	» Frame format check:
+		» detects invalid frames
+	» acknowledgement check:
+		» ensures atleast one node received the message
+
+Error Frames:
+	» if an node detects an error it will send an error frame
+		» Error FLag + Error Delimiter
+	» forces all nodes to discard the current frame
+	» sender will retransmit automatically
+
+Fault Confinement:
+	» CAN controllers track errors using error counters
+		» Transmit Error Counter(TEC)
+		» Receive Error Counter(REC)
+	» based on this the node enters a state
+		» Error active
+		» Error Passive -> node can still communicate but send passive error flags
+		» Bus off
+			» if the errors exceed a threshild the node will disconnect from the bus completly
+			» to prevent faulty ecu from destroying the network
+
+CAN Hardware Components
+	» a CAN node usually has 3 parts:
+		» Microcontroller
+			» runs software and processes messages
+		» CAN controller:
+			» handles:
+				» frame generation
+				» Arbitration
+				» CRC
+				» error detection
+		CAN transceiver:
+			» converts logic signals into differential bus signals
+
+	
+Typical automotive CAN Networks:
+	» Powertrain CAN(~500 kbit/s)
+		» Connects the engine ECU, trasmission and ABS
+	Body CAN(~125-250 kbit/s):
+		» connects door, light and climate controll
+	Infotainment CAN:
+		» connects radio, display, navigation	
+
+
+CAN FD(Modern Version):
+	Classic CAN:
+		» 8-byte payload
+		» 1 Mbit/s max
+
+	CAN FD:
+		» up to 64 bytes payload
+		» up to 8 Mbit/s data phase
+
+
+CAN Pro:
+	» deterministic communication
+	» automatic Arbitration
+	» strong error detection
+	» very simple wiring
