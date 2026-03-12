@@ -355,7 +355,7 @@ void ShellWindow::onModuleEmbedReady(int idx, quint64 winId)
 
     QWidget *container = QWidget::createWindowContainer(foreign, m_stack);
     container->setMinimumSize(WIN_W, CONTENT_H);
-    container->setFocusPolicy(Qt::StrongFocus);
+    container->setFocusPolicy(Qt::NoFocus); //clicks go to qt container-> clicks on button mayby not send correct
 
     // placeholder를 container로 교체 (같은 인덱스 유지)
     QWidget *old = m_stack->widget(idx);

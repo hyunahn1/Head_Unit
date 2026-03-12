@@ -8,8 +8,8 @@
 #include "MediaWindow.h"
 #include "ShellClient.h"
 #include "GearStateManager.h"
-
 #include <QApplication>
+#include <QTimer>
 #include <QDebug>
 
 int main(int argc, char *argv[])
@@ -44,7 +44,9 @@ int main(int argc, char *argv[])
         QObject::connect(bridge, &ShellClient::shellShutdown, &app, &QApplication::quit);
         QObject::connect(bridge, &ShellClient::connected, [bridge, window]() {
             window->show();  // X11 window must be mapped before embedding
-            bridge->notifyReady(window->winId());
+            QTimer::singleShot(50, bridge, [bridge, window]() {
+                bridge->notifyReady(window->winId());
+            });
         });
 
         bridge->connectToShell();

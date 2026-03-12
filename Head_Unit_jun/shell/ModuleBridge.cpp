@@ -117,6 +117,7 @@ void ModuleBridge::sendFrame(HuProtocol::MsgType type, const QByteArray &payload
 {
     if (!m_socket) return;
     m_socket->write(HuProtocol::encodeFrame(type, payload));
+	m_socket->flush();
 }
 
 void ModuleBridge::sendShow(const QRect &geo)

@@ -31,6 +31,8 @@ void GearStateManager::setGearFromButton(GearState gear)
 
 void GearStateManager::setGear(GearState gear, const QString &source)
 {
+	if (gear == m_gear)
+		return ;
     m_gear = gear;
     m_lastSource = source;
     emit gearChanged(m_gear, m_lastSource);
