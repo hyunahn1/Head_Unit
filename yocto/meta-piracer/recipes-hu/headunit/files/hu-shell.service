@@ -4,7 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-Environment=DISPLAY=:0
+Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QPA_EGLFS_PHYSICAL_WIDTH=155
+Environment=QT_QPA_EGLFS_PHYSICAL_HEIGHT=86
+Environment=QT_QPA_EGLFS_ROTATION=0
+Environment=QT_SCALE_FACTOR=1
+Environment=QT_FONT_DPI=96
 Environment=VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
 ExecStart=/usr/bin/hu_shell
 Restart=always

@@ -1,0 +1,33 @@
+From 0001000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fix <fix@fix.com>
+Date: Wed, 11 Mar 2026 00:00:00 +0000
+Subject: [PATCH] target/i386: fix STUB_HELPER for GCC 12+ unreachable detection
+
+Upstream-Status: Backport [https://gitlab.com/qemu-project/qemu/-/commit/]
+Signed-off-by: fix <fix@fix.com>
+
+GCC 12+ determines that STUB_HELPER-generated inline stubs for i386
+port I/O operations are reachable after inlining, triggering the
+__attribute__((error)) compile-time assertion in qemu_build_not_reached().
+
+Replace with __builtin_unreachable() which correctly tells the compiler
+these paths will never execute, without the error attribute check.
+
+Upstream fix: QEMU 8.2.8+
+---
+ target/i386/tcg/translate.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/i386/tcg/translate.c b/target/i386/tcg/translate.c
+index 1111111..2222222 100644
+--- a/target/i386/tcg/translate.c
++++ b/target/i386/tcg/translate.c
+@@ -205,7 +205,7 @@ STUB_HELPER(inb, TCGv ret, TCGv_env env, TCGv_i32 port)
+  */
+ #define STUB_HELPER(NAME, ...) \
+     static inline void gen_helper_##NAME(__VA_ARGS__) \
+-    { qemu_build_not_reached(); }
++    { __builtin_unreachable(); }
+ 
+ #ifdef CONFIG_USER_ONLY
+ STUB_HELPER(clgi, TCGv_env env)

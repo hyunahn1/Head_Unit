@@ -13,7 +13,7 @@ B = "${WORKDIR}/build"
 # Suppress checksum warnings for externalsrc helper symlinks (oe-workdir/oe-logs).
 EXTERNALSRC_SYMLINKS = ""
 
-DEPENDS += "qtbase"
+DEPENDS += "qtbase qtmultimedia"
 
 EXTRA_OECMAKE += " \
     -DCMAKE_BUILD_TYPE=Release \

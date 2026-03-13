@@ -9,4 +9,10 @@ IMAGE_FEATURES += "ssh-server-openssh"
 IMAGE_INSTALL:append = " \
     headunit \
     qtbase-plugins \
+    qtmultimedia-plugins \
+    qtmultimedia \
+    ttf-dejavu \
+    ttf-dejavu-common \
+    fontconfig \
+    fontconfig-utils \
 "
