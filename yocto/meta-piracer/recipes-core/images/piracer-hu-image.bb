@@ -11,8 +11,9 @@ IMAGE_INSTALL:append = " \
     qtbase-plugins \
     qtmultimedia-plugins \
     qtmultimedia \
-    ttf-dejavu \
+    ttf-dejavu-sans \
     ttf-dejavu-common \
+    ttf-noto-emoji-regular \
     fontconfig \
     fontconfig-utils \
 "

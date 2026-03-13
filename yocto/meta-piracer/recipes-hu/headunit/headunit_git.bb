@@ -7,7 +7,7 @@ SRC_URI = "file://hu-shell.service"
 inherit cmake_qt5 pkgconfig systemd externalsrc
 
 # Use the repository's local source tree during development.
-EXTERNALSRC = "${TOPDIR}/../../Head_Unit_jun"
+EXTERNALSRC = "${TOPDIR}/../../Head_Unit_luca"
 S = "${EXTERNALSRC}"
 B = "${WORKDIR}/build"
 # Suppress checksum warnings for externalsrc helper symlinks (oe-workdir/oe-logs).
