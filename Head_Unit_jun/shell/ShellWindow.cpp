@@ -3,14 +3,21 @@
  */
 
 #include "ShellWindow.h"
-#include "ModuleController.h"
-#include "ModuleBridge.h"
 #include "widgets/TabBar.h"
 #include "widgets/StatusBar.h"
 #include "widgets/GlowOverlay.h"
 #include "widgets/SplashScreen.h"
-#include "widgets/FallbackContentWidget.h"
 #include "widgets/ReverseCameraWindow.h"
+
+// 모듈 위젯
+#include "MediaWindow.h"
+#include "YouTubeWindow.h"
+#include "CallWindow.h"
+#include "NavigationWindow.h"
+#include "AmbientWindow.h"
+#include "SettingsWindow.h"
+
+// 차량 데이터
 #include "MockVehicleDataProvider.h"
 #include "VSomeIPClient.h"
 #include "MockLedController.h"
@@ -19,7 +26,6 @@
 
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QWindow>
 #include <QStackedWidget>
 #include <QApplication>
 #include <QScreen>
@@ -30,26 +36,17 @@
 #include <QJsonObject>
 #include <QDateTime>
 
-// 모듈 이름, 실행파일명, 소켓 경로
-static const struct {
-    const char *name;
-    const char *exec;
-    const char *socket;
-} kModules[6] = {
-    { "media",      "hu_module_media",      "/tmp/hu_shell_media.sock"      },
-    { "youtube",    "hu_module_youtube",    "/tmp/hu_shell_youtube.sock"    },
-    { "call",       "hu_module_call",       "/tmp/hu_shell_call.sock"       },
-    { "navigation", "hu_module_navigation", "/tmp/hu_shell_navigation.sock" },
-    { "ambient",    "hu_module_ambient",    "/tmp/hu_shell_ambient.sock"    },
-    { "settings",   "hu_module_settings",  "/tmp/hu_shell_settings.sock"   },
-};
-
 ShellWindow::ShellWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    // 모듈 창을 QStackedWidget에 X11 embed해서 하나의 창처럼 동작
+    // 스크린 크기에 맞게 윈도우 크기 동적 결정
+    QScreen *screen = QApplication::primaryScreen();
+    const QRect geo = screen ? screen->availableGeometry() : QRect(0, 0, 1024, 600);
+    m_winW = geo.width();
+    m_winH = geo.height();
+
     setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
-    setGeometry(0, 0, WIN_W, WIN_H);
+    setGeometry(geo);
     setWindowTitle("PiRacer Head Unit");
     setStyleSheet("QMainWindow { background-color: #0D0D0F; }");
 
@@ -59,17 +56,10 @@ ShellWindow::ShellWindow(QWidget *parent)
     m_ledController    = new MockLedController(this);
 
     setupUI();
-    setupModules();
     setupConnections();
 }
 
-ShellWindow::~ShellWindow()
-{
-    for (int i = 0; i < MODULE_COUNT; ++i) {
-        if (m_bridges[i])     m_bridges[i]->sendShutdown();
-        if (m_controllers[i]) m_controllers[i]->terminate();
-    }
-}
+ShellWindow::~ShellWindow() {}
 
 void ShellWindow::setupUI()
 {
@@ -80,107 +70,71 @@ void ShellWindow::setupUI()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
+    // ── 탭 바 ─────────────────────────────────────────────────────────
     m_tabBar = new TabBar(this);
     m_tabBar->setFixedHeight(TAB_H);
     layout->addWidget(m_tabBar);
 
-    // 모듈 창을 X11 embed로 내장하는 스택 위젯
+    // ── 콘텐츠 스택 (탭 전환) ─────────────────────────────────────────
     m_stack = new QStackedWidget(this);
-    m_stack->setFixedHeight(CONTENT_H);
     m_stack->setStyleSheet("background:#0D0D0F;");
     layout->addWidget(m_stack, 1);
 
-    // 각 모듈 슬롯에 폴백 UI (GearPanel + 메시지) — embed 전까지 표시, 모듈 실패 시에도 기어 제어 가능
-    static const char *tabNames[] = { "Media", "YouTube", "Call", "Navigation", "Lighting", "Settings" };
-    for (int i = 0; i < MODULE_COUNT; ++i) {
-        auto *ph = new FallbackContentWidget(
-            m_gearStateManager,
-            QString("Loading %1...").arg(tabNames[i]),
-            m_stack
-        );
-        m_stack->addWidget(ph);
-    }
+    // ── 모듈 위젯 직접 생성 후 스택에 삽입 ──────────────────────────
+    m_mediaWidget      = new MediaWindow(m_gearStateManager, m_stack);
+    m_youtubeWidget    = new YouTubeScreen(m_gearStateManager, m_stack);
+    m_callWidget       = new CallScreen(m_gearStateManager, m_stack);
+    m_navigationWidget = new NavigationScreen(m_gearStateManager, m_stack);
+    m_ambientWidget    = new AmbientScreen(m_ledController, m_gearStateManager, m_stack);
+    m_settingsWidget   = new SettingsScreen(m_gearStateManager, m_stack);
 
+    m_stack->addWidget(m_mediaWidget);      // index 0
+    m_stack->addWidget(m_youtubeWidget);    // index 1
+    m_stack->addWidget(m_callWidget);       // index 2
+    m_stack->addWidget(m_navigationWidget); // index 3
+    m_stack->addWidget(m_ambientWidget);    // index 4
+    m_stack->addWidget(m_settingsWidget);   // index 5
+
+    m_stack->setCurrentIndex(0);
+
+    // ── 상태 바 ───────────────────────────────────────────────────────
     m_statusBar = new StatusBar(m_vehicleData, m_gearStateManager, this);
     m_statusBar->setFixedHeight(STATUS_H);
     layout->addWidget(m_statusBar);
 
+    // ── Ambient Glow 오버레이 (마우스 이벤트 투명) ─────────────────
     m_ambientGlow = new GlowOverlay(central);
-    m_ambientGlow->setGeometry(0, 0, WIN_W, WIN_H);
+    m_ambientGlow->setGeometry(0, 0, m_winW, m_winH);
     m_ambientGlow->raise();
 
-    // 부팅 스플래시 — 로고 페이드인 후 콘텐츠로 전환
+    // ── 부팅 스플래시 ─────────────────────────────────────────────────
     auto *splash = new SplashScreen(central);
-    splash->setGeometry(0, 0, WIN_W, WIN_H);
+    splash->setGeometry(0, 0, m_winW, m_winH);
     splash->raise();
     connect(splash, &SplashScreen::finished, splash, &QWidget::deleteLater);
     connect(splash, &SplashScreen::finished, this, [this] { m_ambientGlow->raise(); });
 }
 
-void ShellWindow::setupModules()
-{
-    for (int i = 0; i < MODULE_COUNT; ++i) {
-        m_bridges[i] = new ModuleBridge(kModules[i].socket, this);
-        m_bridges[i]->listen();
-
-        m_controllers[i] = new ModuleController(
-            kModules[i].name,
-            kModules[i].exec,
-            kModules[i].socket,
-            this
-        );
-
-        connect(m_controllers[i], &ModuleController::moduleStarted,
-                this, &ShellWindow::onModuleStarted);
-        connect(m_controllers[i], &ModuleController::moduleExited,
-                this, &ShellWindow::onModuleExited);
-
-        // 모듈이 준비되면 X11 winId로 스택에 embed
-        connect(m_bridges[i], &ModuleBridge::moduleReady,
-                this, [this, i](quint64 winId) {
-            onModuleEmbedReady(i, winId);
-        });
-
-        // 기어 변경 요청
-        connect(m_bridges[i], &ModuleBridge::gearChangeRequested,
-                this, &ShellWindow::onGearChangeRequested);
-
-        // Ambient 모듈만 색상 시그널 연결
-        if (i == 4) { // ambient index
-            connect(m_bridges[i], &ModuleBridge::ambientColorChanged,
-                    this, &ShellWindow::onAmbientColorChanged);
-            connect(m_bridges[i], &ModuleBridge::ambientOff,
-                    this, &ShellWindow::onAmbientOff);
-        }
-
-        // Settings 모듈
-        if (i == 5) {
-            connect(m_bridges[i], &ModuleBridge::settingsChanged,
-                    this, &ShellWindow::onSettingsChanged);
-        }
-
-        m_controllers[i]->launch();
-    }
-
-    // 시작 시 모두 숨기고 첫 탭(media)만 표시
-    // 약간 딜레이 후 활성화 (모듈 초기화 시간 대기)
-    QTimer::singleShot(500, this, [this] { switchToModule(0); });
-}
-
 void ShellWindow::setupConnections()
 {
+    // 탭 전환
     connect(m_tabBar, &TabBar::tabSelected, this, &ShellWindow::onTabChanged);
 
+    // 기어 변경 → VSomeIP 발행
     connect(m_gearStateManager, &GearStateManager::gearChanged,
             this, &ShellWindow::onGearChanged);
 
-    // 차량 데이터 → 모든 모듈 브로드캐스트
-    connect(m_vehicleData, &IVehicleDataProvider::speedChanged,
-            this, &ShellWindow::broadcastVehicleSpeed);
-    connect(m_vehicleData, &IVehicleDataProvider::batteryChanged,
-            this, &ShellWindow::broadcastBattery);
+    // Ambient → GlowOverlay
+    connect(m_ambientWidget, &AmbientScreen::ambientColorChanged,
+            this, &ShellWindow::onAmbientColorChanged);
+    connect(m_ambientWidget, &AmbientScreen::ambientOff,
+            this, &ShellWindow::onAmbientOff);
 
-    // VSOMEIP 상태 폴링 (1초마다) → 변경 시 모듈에 브로드캐스트
+    // 차량 데이터 → StatusBar (StatusBar가 직접 IVehicleDataProvider를 참조하므로 불필요할 수도 있음)
+    connect(m_vehicleData, &IVehicleDataProvider::speedChanged,
+            m_settingsWidget, &SettingsScreen::updateSpeed);
+
+    // IPC 상태 폴링 (1초마다)
     m_ipcPollTimer = new QTimer(this);
     m_ipcPollTimer->setInterval(1000);
     connect(m_ipcPollTimer, &QTimer::timeout, this, [this] {
@@ -192,7 +146,7 @@ void ShellWindow::setupConnections()
     });
     m_ipcPollTimer->start();
 
-    // 게임패드 기어 폴링 (500ms마다 파일 읽기)
+    // 게임패드 기어 폴링 (500ms마다)
     m_gearFilePollTimer = new QTimer(this);
     m_gearFilePollTimer->setInterval(500);
     connect(m_gearFilePollTimer, &QTimer::timeout, this, &ShellWindow::pollGamepadGear);
@@ -209,10 +163,10 @@ void ShellWindow::onTabChanged(int index)
 
 void ShellWindow::switchToModule(int index)
 {
-    if (index < 0 || index >= MODULE_COUNT) return;
+    if (index < 0 || index >= m_stack->count()) return;
     m_activeIndex = index;
     m_tabBar->setCurrentIndex(index);
-    m_stack->setCurrentIndex(index);  // X11 embed: 스택만 전환하면 됨
+    m_stack->setCurrentIndex(index);
 }
 
 // ── 기어 변경 ─────────────────────────────────────────────────────────
@@ -220,11 +174,10 @@ void ShellWindow::switchToModule(int index)
 void ShellWindow::onGearChanged(GearState gear, const QString &source)
 {
     Q_UNUSED(source)
-    if (m_vsomeipClient) {
+    if (m_vsomeipClient)
         m_vsomeipClient->publishGear(gear);
-    }
 
-    const bool isReverse = (static_cast<quint8>(gear) == 1); // GearState::R = 1
+    const bool isReverse = (static_cast<quint8>(gear) == 1); // GearState::R
     if (isReverse) {
         if (!m_reverseCamera) {
             m_reverseCamera = new ReverseCameraWindow(this);
@@ -246,88 +199,9 @@ void ShellWindow::onGearChanged(GearState gear, const QString &source)
     } else {
         if (m_reverseCamera) m_reverseCamera->close();
     }
-
-    broadcastGearState(gear);
 }
 
-void ShellWindow::onGearChangeRequested(GearState gear, const QString &source)
-{
-    m_gearStateManager->setGear(gear, source);
-}
-
-// ── 브로드캐스트 ──────────────────────────────────────────────────────
-
-void ShellWindow::broadcastGearState(GearState gear)
-{
-    for (auto *b : m_bridges)
-        if (b) b->sendGearState(gear);
-}
-
-void ShellWindow::broadcastVehicleSpeed(float kmh)
-{
-    for (auto *b : m_bridges)
-        if (b) b->sendVehicleSpeed(kmh);
-}
-
-void ShellWindow::broadcastBattery(float v, float pct)
-{
-    for (auto *b : m_bridges)
-        if (b) b->sendBattery(v, pct);
-}
-
-void ShellWindow::broadcastIpcStatus(bool connected)
-{
-    for (auto *b : m_bridges)
-        if (b) b->sendIpcStatus(connected);
-}
-
-// ── 게임패드 기어 폴링 ───────────────────────────────────────────────
-
-static QString gearToDirection(GearState g)
-{
-    switch (static_cast<quint8>(g)) {
-    case 3: return "F";   // GearState::D
-    case 1: return "R";   // GearState::R
-    default: return "N";  // GearState::P (0) and GearState::N (2)
-    }
-}
-
-void ShellWindow::pollGamepadGear()
-{
-    static const QString kPath = "/tmp/piracer_drive_mode.json";
-
-    // 파일 존재 및 신선도 확인 (3초 이상 된 파일 무시)
-    QFileInfo fi(kPath);
-    if (!fi.exists()) return;
-    if (fi.lastModified().msecsTo(QDateTime::currentDateTime()) > 3000) return;
-
-    QFile f(kPath);
-    if (!f.open(QIODevice::ReadOnly)) return;
-    const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
-    f.close();
-    if (!doc.isObject()) return;
-
-    const QString dir = doc.object().value("direction").toString().trimmed().toUpper();
-    if (dir.isEmpty()) return;
-
-    // 파일 방향이 바뀌지 않으면 처리 안 함 (echo 방지)
-    if (dir == m_lastFileGearDir) return;
-    m_lastFileGearDir = dir;
-
-    // 현재 기어가 이미 같은 방향이면 무시 (P/N → 둘 다 "N"이므로 덮어쓰지 않음)
-    const GearState currentGear = m_gearStateManager->gear();
-    if (dir == gearToDirection(currentGear)) return;
-
-    GearState newGear;
-    if (dir == "F")      newGear = GearState::D;
-    else if (dir == "R") newGear = GearState::R;
-    else                 newGear = GearState::N;
-
-    qDebug() << "[Shell] gamepad gear from file:" << dir;
-    m_gearStateManager->setGear(newGear, "gamepad");
-}
-
-// ── 모듈 이벤트 수신 ─────────────────────────────────────────────────
+// ── Ambient / Settings ───────────────────────────────────────────────
 
 void ShellWindow::onAmbientColorChanged(quint8 r, quint8 g, quint8 b, quint8 brightness)
 {
@@ -342,40 +216,67 @@ void ShellWindow::onAmbientOff()
 void ShellWindow::onSettingsChanged(const QVariantMap &changes)
 {
     Q_UNUSED(changes)
-    // TODO: 속도 단위 변경 등 쉘 레벨 설정 반영
 }
 
-void ShellWindow::onModuleEmbedReady(int idx, quint64 winId)
+// ── 브로드캐스트 ──────────────────────────────────────────────────────
+
+void ShellWindow::broadcastGearState(GearState gear)
 {
-    QWindow *foreign = QWindow::fromWinId(static_cast<WId>(winId));
-    if (!foreign) {
-        qWarning() << "[Shell] fromWinId failed for module" << idx;
-        return;
+    Q_UNUSED(gear)
+}
+
+void ShellWindow::broadcastVehicleSpeed(float kmh)
+{
+    if (m_settingsWidget) m_settingsWidget->updateSpeed(kmh);
+}
+
+void ShellWindow::broadcastBattery(float v, float pct)
+{
+    Q_UNUSED(v) Q_UNUSED(pct)
+}
+
+void ShellWindow::broadcastIpcStatus(bool connected)
+{
+    if (m_settingsWidget) m_settingsWidget->updateIpcStatus(connected);
+}
+
+// ── 게임패드 기어 폴링 ───────────────────────────────────────────────
+
+static QString gearToDirection(GearState g)
+{
+    switch (static_cast<quint8>(g)) {
+    case 3: return "F";
+    case 1: return "R";
+    default: return "N";
     }
-
-    QWidget *container = QWidget::createWindowContainer(foreign, m_stack);
-    container->setMinimumSize(WIN_W, CONTENT_H);
-    container->setFocusPolicy(Qt::StrongFocus);
-
-    // placeholder를 container로 교체 (같은 인덱스 유지)
-    QWidget *old = m_stack->widget(idx);
-    m_stack->removeWidget(old);
-    old->deleteLater();
-    m_stack->insertWidget(idx, container);
-
-    // 현재 탭이면 바로 표시
-    if (m_activeIndex == idx)
-        m_stack->setCurrentIndex(idx);
-
-    qDebug() << "[Shell] module" << idx << "embedded, winId=" << winId;
 }
 
-void ShellWindow::onModuleStarted(const QString &name)
+void ShellWindow::pollGamepadGear()
 {
-    qDebug() << "[Shell] module started:" << name;
-}
+    static const QString kPath = "/tmp/piracer_drive_mode.json";
 
-void ShellWindow::onModuleExited(const QString &name, int exitCode)
-{
-    qWarning() << "[Shell] module exited:" << name << "code:" << exitCode;
+    QFileInfo fi(kPath);
+    if (!fi.exists()) return;
+    if (fi.lastModified().msecsTo(QDateTime::currentDateTime()) > 3000) return;
+
+    QFile f(kPath);
+    if (!f.open(QIODevice::ReadOnly)) return;
+    const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+    f.close();
+    if (!doc.isObject()) return;
+
+    const QString dir = doc.object().value("direction").toString().trimmed().toUpper();
+    if (dir.isEmpty() || dir == m_lastFileGearDir) return;
+    m_lastFileGearDir = dir;
+
+    const GearState currentGear = m_gearStateManager->gear();
+    if (dir == gearToDirection(currentGear)) return;
+
+    GearState newGear;
+    if (dir == "F")      newGear = GearState::D;
+    else if (dir == "R") newGear = GearState::R;
+    else                 newGear = GearState::N;
+
+    qDebug() << "[Shell] gamepad gear from file:" << dir;
+    m_gearStateManager->setGear(newGear, "gamepad");
 }

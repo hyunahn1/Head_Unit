@@ -7,6 +7,7 @@
 #include "GearStateManager.h"
 
 #include <QApplication>
+#include <QScreen>
 
 int main(int argc, char *argv[])
 {
@@ -49,6 +50,9 @@ int main(int argc, char *argv[])
         });
         QObject::connect(bridge, &ShellClient::shellShutdown, &app, &QApplication::quit);
         QObject::connect(bridge, &ShellClient::connected, [bridge, window]() {
+            QScreen *screen = QApplication::primaryScreen();
+            const QRect geo = screen ? screen->availableGeometry() : QRect(0, 0, 1024, 600);
+            window->setGeometry(geo.x(), geo.y() + 40, geo.width(), geo.height() - 40 - 32);
             window->show();  // X11 window must be mapped before embedding
             bridge->notifyReady(window->winId());
         });

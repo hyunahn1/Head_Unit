@@ -1,9 +1,6 @@
 /**
  * @file ShellWindow.h
- * @brief Head Unit Shell — TabBar + StatusBar + 모듈 프로세스 조율
- *
- * QStackedWidget 없음. 탭 전환은 ModuleBridge를 통해 모듈 창에
- * ShowModule / HideModule 메시지를 보내는 방식으로 처리.
+ * @brief Head Unit Shell — 단일 프로세스, 탭 전환으로 모듈 위젯 show/hide
  */
 
 #ifndef SHELLWINDOW_H
@@ -18,8 +15,16 @@ class StatusBar;
 class GlowOverlay;
 class SplashScreen;
 class ReverseCameraWindow;
-class ModuleController;
-class ModuleBridge;
+
+// 모듈 위젯
+class MediaWindow;
+class YouTubeScreen;
+class CallScreen;
+class NavigationScreen;
+class AmbientScreen;
+class SettingsScreen;
+
+// 차량 데이터
 class IVehicleDataProvider;
 class VSomeIPClient;
 class GearStateManager;
@@ -38,14 +43,12 @@ public:
 private slots:
     void onTabChanged(int index);
     void onGearChanged(GearState gear, const QString &source);
-    void onModuleStarted(const QString &name);
-    void onModuleExited(const QString &name, int exitCode);
-    void onModuleEmbedReady(int idx, quint64 winId);
 
-    // 모듈 → 쉘 이벤트
-    void onGearChangeRequested(GearState gear, const QString &source);
+    // Ambient 모듈 → GlowOverlay
     void onAmbientColorChanged(quint8 r, quint8 g, quint8 b, quint8 brightness);
     void onAmbientOff();
+
+    // Settings 모듈
     void onSettingsChanged(const QVariantMap &changes);
 
     // 게임패드 기어 동기화 (파일 폴링)
@@ -53,7 +56,6 @@ private slots:
 
 private:
     void setupUI();
-    void setupModules();
     void setupConnections();
     void switchToModule(int index);
     void broadcastGearState(GearState gear);
@@ -62,36 +64,39 @@ private:
     void broadcastIpcStatus(bool connected);
 
     // ── UI 컴포넌트 ───────────────────────────────────────────────────
-    TabBar               *m_tabBar       = nullptr;
-    StatusBar            *m_statusBar    = nullptr;
-    GlowOverlay          *m_ambientGlow  = nullptr;
-    ReverseCameraWindow  *m_reverseCamera = nullptr;
-    QStackedWidget       *m_stack        = nullptr;
+    TabBar              *m_tabBar       = nullptr;
+    StatusBar           *m_statusBar    = nullptr;
+    GlowOverlay         *m_ambientGlow  = nullptr;
+    ReverseCameraWindow *m_reverseCamera = nullptr;
+    QStackedWidget      *m_stack        = nullptr;
+
+    // ── 모듈 위젯 (in-process) ────────────────────────────────────────
+    MediaWindow     *m_mediaWidget      = nullptr;
+    YouTubeScreen   *m_youtubeWidget    = nullptr;
+    CallScreen      *m_callWidget       = nullptr;
+    NavigationScreen *m_navigationWidget = nullptr;
+    AmbientScreen   *m_ambientWidget    = nullptr;
+    SettingsScreen  *m_settingsWidget   = nullptr;
 
     // ── 차량 데이터 ───────────────────────────────────────────────────
-    IVehicleDataProvider *m_vehicleData       = nullptr;
-    VSomeIPClient       *m_vsomeipClient     = nullptr;   // Gear publish → Instrument Cluster
-    GearStateManager     *m_gearStateManager  = nullptr;
-    ILedController       *m_ledController     = nullptr;
+    IVehicleDataProvider *m_vehicleData      = nullptr;
+    VSomeIPClient        *m_vsomeipClient    = nullptr;
+    GearStateManager     *m_gearStateManager = nullptr;
+    ILedController       *m_ledController    = nullptr;
 
-    // ── 모듈 프로세스 / 브릿지 ───────────────────────────────────────
-    static constexpr int MODULE_COUNT = 6;
-    ModuleController *m_controllers[MODULE_COUNT] {};
-    ModuleBridge     *m_bridges[MODULE_COUNT]     {};
-
-    int m_activeIndex = 0;
+    int  m_activeIndex   = 0;
     bool m_lastIpcStatus = false;
-    QTimer *m_ipcPollTimer = nullptr;
-    QString m_lastFileGearDir;           // 마지막으로 읽은 파일 방향 ("F"|"R"|"N"|"")
-    QTimer *m_gearFilePollTimer = nullptr;
+
+    QTimer  *m_ipcPollTimer      = nullptr;
+    QTimer  *m_gearFilePollTimer = nullptr;
+    QString  m_lastFileGearDir;
 
     // 레이아웃 상수
-    static constexpr int WIN_W      = 1024;
-    static constexpr int WIN_H      = 600;
-    static constexpr int TAB_H      = 40;
-    static constexpr int STATUS_H   = 32;
-    static constexpr int CONTENT_Y  = TAB_H;
-    static constexpr int CONTENT_H  = WIN_H - TAB_H - STATUS_H;
+    static constexpr int TAB_H    = 40;
+    static constexpr int STATUS_H = 32;
+
+    int m_winW = 1024;
+    int m_winH = 600;
 };
 
 #endif // SHELLWINDOW_H
