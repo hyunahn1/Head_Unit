@@ -30,13 +30,24 @@ void ModuleController::launch()
     m_process = new QProcess(this);
     m_process->setProgram(exe);
     m_process->setArguments({ m_socketPath });
-    m_process->setProcessChannelMode(QProcess::MergedChannels);
+    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("QT_QPA_PLATFORM", "xcb");
-    // Ensure DISPLAY is set for XWayland cross-process X11 embedding
-    if (env.value("DISPLAY").isEmpty())
-        env.insert("DISPLAY", ":0");
+    // Modules connect to hu_shell's Wayland compositor socket
+    env.insert("QT_QPA_PLATFORM", "wayland");
+    env.insert("WAYLAND_DISPLAY", "wayland-hu");
+    // XDG_RUNTIME_DIR must be set for Wayland socket lookup
+    if (env.value("XDG_RUNTIME_DIR").isEmpty())
+        env.insert("XDG_RUNTIME_DIR", "/run/user/0");
+    // Keep DISPLAY if set (local desktop: GTK needs it; RPi has no DISPLAY anyway)
+    // Use Fusion style to avoid loading GTK platform theme plugin
+    env.insert("QT_STYLE_OVERRIDE", "Fusion");
+    env.insert("GDK_BACKEND", "x11");
+    // Force shm-emulation-server buffer integration to avoid xcomposite-glx X11 windows.
+    // xcomposite-glx creates invisible X11 windows that intercept all mouse input to hu_shell.
+    // shm-emulation-server uses shared memory buffers — no X11 windows created.
+    // On RPi (eglfs + wayland-egl), this env var is ignored and wayland-egl is used.
+    env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "shm-emulation-server");
     m_process->setProcessEnvironment(env);
 
     connect(m_process,

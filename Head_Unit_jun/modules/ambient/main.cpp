@@ -1,6 +1,10 @@
 /**
  * @file main.cpp (ambient module)
+ *
+ * Wayland 클라이언트로 hu_shell의 HUCompositor에 연결합니다.
+ * LED 색상 변경은 ModuleBridge를 통해 hu_shell의 GlowOverlay에 전달됩니다.
  */
+
 #include "AmbientService.h"
 #include "AmbientWindow.h"
 #include "ShellClient.h"
@@ -8,6 +12,7 @@
 #include "MockLedController.h"
 
 #include <QApplication>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -22,14 +27,15 @@ int main(int argc, char *argv[])
     auto *service     = new AmbientService(led, &app);
     auto *window      = new AmbientScreen(led, gearManager);
     window->setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
+    window->setWindowTitle("ambient"); // HUCompositor 식별자
 
     if (standalone) {
-        window->setGeometry(0, 40, 1024, 528);
-        window->show();
+        window->showFullScreen();
+        qDebug() << "[hu_module_ambient] standalone mode";
     } else {
         auto *bridge = new ShellClient(socketPath, &app);
 
-        // LED 색상 → shell 전달 (AmbientScreen이 직접 신호 발생)
+        // LED 색상 → shell 전달 (GlowOverlay 업데이트)
         QObject::connect(window, &AmbientScreen::ambientColorChanged,
                          bridge, [bridge](uint8_t r, uint8_t g, uint8_t b, int brightness) {
             bridge->sendAmbientColor(r, g, b, static_cast<quint8>(brightness));
@@ -46,11 +52,13 @@ int main(int argc, char *argv[])
                 bridge->requestGearChange(g, src);
         });
         QObject::connect(bridge, &ShellClient::shellShutdown, &app, &QApplication::quit);
-        QObject::connect(bridge, &ShellClient::connected, [bridge, window]() {
-            window->show();  // X11 window must be mapped before embedding
-            bridge->notifyReady(window->winId());
+
+        QObject::connect(bridge, &ShellClient::connected, [window]() {
+            window->showFullScreen();
         });
+
         bridge->connectToShell();
     }
+
     return app.exec();
 }

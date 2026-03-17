@@ -1,0 +1,38 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          hu-shell
+# Required-Start:    $network dbus
+# Required-Stop:
+# Default-Start:     3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: PiRacer Head Unit Shell
+### END INIT INFO
+
+export QT_QPA_PLATFORM=eglfs
+export XDG_RUNTIME_DIR=/run/user/0
+export QT_FONT_DPI=96
+export VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
+
+case "$1" in
+    start)
+        mkdir -p /run/user/0
+        chmod 700 /run/user/0
+        /usr/bin/hu_shell &
+        echo "hu_shell started"
+        ;;
+    stop)
+        killall hu_shell 2>/dev/null
+        echo "hu_shell stopped"
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

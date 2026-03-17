@@ -2,6 +2,7 @@
 #include "EWIEGA46WW/moc_ModuleBridge.cpp"
 #include "EWIEGA46WW/moc_ModuleController.cpp"
 #include "EWIEGA46WW/moc_ShellWindow.cpp"
+#include "IMAN36LHMA/moc_FallbackContentWidget.cpp"
 #include "IMAN36LHMA/moc_GearPanel.cpp"
 #include "IMAN36LHMA/moc_ReverseCameraWindow.cpp"
 #include "IMAN36LHMA/moc_SplashScreen.cpp"

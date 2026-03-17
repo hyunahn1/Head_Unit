@@ -41,8 +41,8 @@ static const char *kScreenStyle = R"(
         border-radius: 12px; padding: 4px; outline: none;
     }
     QListView::item {
-        color: #B3B3B7; padding: 6px 12px; border-radius: 6px; border: none;
-        font-size: 10pt;
+        color: #B3B3B7; padding: 4px 10px; border-radius: 6px; border: none;
+        font-size: 9pt;
     }
     QListView::item:hover    { background: #252529; color: #FFFFFF; }
     QListView::item:selected { background: #00D4AA22; color: #00D4AA; }
@@ -57,7 +57,7 @@ static const char *kCardStyle    = "background-color: #1A1A1E; border-radius: 16
 static const char *kCtrlBtnStyle = R"(
     QPushButton {
         background-color: #252529; color: #FFFFFF;
-        border: none; border-radius: 18px; font-size: 12pt;
+        border: none; border-radius: 14px; font-size: 11pt;
     }
     QPushButton:hover   { background-color: #3A3A3F; }
     QPushButton:pressed { background-color: #444448; }
@@ -65,7 +65,7 @@ static const char *kCtrlBtnStyle = R"(
 static const char *kPlayBtnStyle = R"(
     QPushButton {
         background-color: #00D4AA; color: #000000;
-        border: none; border-radius: 21px; font-size: 14pt;
+        border: none; border-radius: 16px; font-size: 12pt;
     }
     QPushButton:hover   { background-color: #00EFBF; }
     QPushButton:pressed { background-color: #00A887; }
@@ -73,8 +73,8 @@ static const char *kPlayBtnStyle = R"(
 static const char *kAddBtnStyle  = R"(
     QPushButton {
         background-color: transparent; color: #00D4AA;
-        border: 1px solid #00D4AA33; border-radius: 8px;
-        font-size: 10pt; padding: 3px 10px;
+        border: 1px solid #00D4AA33; border-radius: 6px;
+        font-size: 9pt; padding: 2px 8px;
     }
     QPushButton:hover { background-color: #00D4AA18; border-color: #00D4AA; }
 )";
@@ -89,24 +89,25 @@ MediaWindow::MediaWindow(GearStateManager *gearState, QWidget *parent)
     setStyleSheet(kScreenStyle);
 
     QHBoxLayout *root = new QHBoxLayout(this);
-    root->setContentsMargins(0, 8, 12, 8);
-    root->setSpacing(20);  // Gap between gear panel green line and main content
+    root->setContentsMargins(0, 6, 10, 6);
+    root->setSpacing(14);
 
     QVBoxLayout *content = new QVBoxLayout();
-    content->setSpacing(10);
+    content->setSpacing(8);
 
     // ── Now Playing Card ─────────────────────────────────────
     QFrame *card = new QFrame(this);
     card->setStyleSheet(kCardStyle);
-    card->setMinimumHeight(160);
-    card->setFixedHeight(172);
+    card->setMinimumHeight(120);
+    card->setMaximumHeight(160);
+    card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     QHBoxLayout *cardLayout = new QHBoxLayout(card);
-    cardLayout->setContentsMargins(12, 10, 12, 10);
-    cardLayout->setSpacing(12);
+    cardLayout->setContentsMargins(10, 8, 10, 8);
+    cardLayout->setSpacing(10);
 
     // Album art - shows cover if embedded, otherwise ♪ placeholder
     m_albumArt = new QLabel(card);
-    m_albumArt->setFixedSize(96, 96);
+    m_albumArt->setFixedSize(80, 80);
     m_albumArt->setAlignment(Qt::AlignCenter);
     showPlaceholderArt();
 
@@ -115,22 +116,22 @@ MediaWindow::MediaWindow(GearStateManager *gearState, QWidget *parent)
     info->setSpacing(4);
 
     m_trackTitle = new QLabel("No Track Selected", card);
-    m_trackTitle->setStyleSheet("font-size: 12pt; font-weight: bold; color: #FFFFFF;");
+    m_trackTitle->setStyleSheet("font-size: 11pt; font-weight: bold; color: #FFFFFF;");
     m_trackTitle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    m_trackTitle->setWordWrap(true);
+    m_trackTitle->setWordWrap(false);
 
     m_artistName = new QLabel("", card);
-    m_artistName->setStyleSheet("font-size: 10pt; color: #B3B3B7;");
+    m_artistName->setStyleSheet("font-size: 9pt; color: #B3B3B7;");
 
     // Controls
     QHBoxLayout *controls = new QHBoxLayout();
     controls->setSpacing(6);
-    m_prevBtn      = new QPushButton("⏮", card);
+    m_prevBtn      = new QPushButton("◀◀", card);
     m_playPauseBtn = new QPushButton("▶", card);
-    m_nextBtn      = new QPushButton("⏭", card);
-    m_prevBtn->setFixedSize(36, 36);
-    m_nextBtn->setFixedSize(36, 36);
-    m_playPauseBtn->setFixedSize(42, 42);
+    m_nextBtn      = new QPushButton("▶▶", card);
+    m_prevBtn->setFixedSize(28, 28);
+    m_nextBtn->setFixedSize(28, 28);
+    m_playPauseBtn->setFixedSize(32, 32);
     m_prevBtn->setStyleSheet(kCtrlBtnStyle);
     m_nextBtn->setStyleSheet(kCtrlBtnStyle);
     m_playPauseBtn->setStyleSheet(kPlayBtnStyle);
@@ -144,12 +145,12 @@ MediaWindow::MediaWindow(GearStateManager *gearState, QWidget *parent)
     QHBoxLayout *progressRow = new QHBoxLayout();
     progressRow->setSpacing(8);
     m_posLabel = new QLabel("0:00", card);
-    m_posLabel->setStyleSheet("font-size: 9pt; color: #6E6E73; min-width: 28px;");
+    m_posLabel->setStyleSheet("font-size: 8pt; color: #6E6E73; min-width: 26px;");
     m_progressSlider = new QSlider(Qt::Horizontal, card);
     m_progressSlider->setRange(0, 0);
     m_progressSlider->setTracking(false);
     m_durLabel = new QLabel("0:00", card);
-    m_durLabel->setStyleSheet("font-size: 9pt; color: #6E6E73; min-width: 28px;");
+    m_durLabel->setStyleSheet("font-size: 8pt; color: #6E6E73; min-width: 26px;");
     m_durLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     progressRow->addWidget(m_posLabel);
     progressRow->addWidget(m_progressSlider, 1);
@@ -182,7 +183,7 @@ MediaWindow::MediaWindow(GearStateManager *gearState, QWidget *parent)
     QHBoxLayout *listHeader = new QHBoxLayout();
     listHeader->setContentsMargins(4, 0, 8, 0);
     QLabel *listTitle = new QLabel("Playlist", this);
-    listTitle->setStyleSheet("font-size: 11pt; font-weight: bold; color: #FFFFFF;");
+    listTitle->setStyleSheet("font-size: 10pt; font-weight: bold; color: #FFFFFF;");
     QPushButton *addBtn = new QPushButton("+ Add Folder", this);
     addBtn->setStyleSheet(kAddBtnStyle);
     listHeader->addWidget(listTitle);
@@ -297,7 +298,7 @@ void MediaWindow::applyAccentColor(const QColor &color)
     m_playPauseBtn->setStyleSheet(QString(R"(
         QPushButton {
             background-color: %1; color: #000000;
-            border: none; border-radius: 21px; font-size: 14pt;
+            border: none; border-radius: 16px; font-size: 12pt;
         }
         QPushButton:hover   { background-color: %2; }
         QPushButton:pressed { background-color: %3; }
@@ -322,8 +323,8 @@ void MediaWindow::applyAccentColor(const QColor &color)
             border-radius: 12px; padding: 4px; outline: none;
         }
         QListView::item {
-            color: #B3B3B7; padding: 8px 14px; border-radius: 8px; border: none;
-            font-size: 12pt;
+            color: #B3B3B7; padding: 4px 10px; border-radius: 6px; border: none;
+            font-size: 9pt;
         }
         QListView::item:hover    { background: #252529; color: #FFFFFF; }
         QListView::item:selected { background: %1; color: %2; }
@@ -343,7 +344,7 @@ void MediaWindow::showPlaceholderArt()
     m_albumArt->setText("♪");
     m_albumArt->setStyleSheet(
         "background-color: #252529; border-radius: 10px;"
-        "color: #6E6E73; font-size: 36pt;");
+        "color: #6E6E73; font-size: 28pt;");
     applyAccentColor(QColor(0, 212, 170)); // reset to default teal
 }
 
@@ -353,19 +354,19 @@ void MediaWindow::onCoverArtChanged(const QPixmap &art)
         if (m_currentTrack >= 0) {
             // No embedded art → generate a gradient placeholder from track title
             const QColor c = colorFromTitle(m_playlist->titleAt(m_currentTrack));
-            QPixmap pm(96, 96);
-            QPainter p(&pm);
-            p.setRenderHint(QPainter::Antialiasing);
-            QLinearGradient grad(0, 0, 96, 96);
-            grad.setColorAt(0, c.lighter(130));
-            grad.setColorAt(1, c.darker(160));
-            p.fillRect(pm.rect(), grad);
-            p.setPen(QColor(255, 255, 255, 160));
-            QFont f = p.font();
-            f.setPointSize(36);
-            p.setFont(f);
-            p.drawText(pm.rect(), Qt::AlignCenter, "♪");
-            p.end();
+        QPixmap pm(80, 80);
+        QPainter p(&pm);
+        p.setRenderHint(QPainter::Antialiasing);
+        QLinearGradient grad(0, 0, 80, 80);
+        grad.setColorAt(0, c.lighter(130));
+        grad.setColorAt(1, c.darker(160));
+        p.fillRect(pm.rect(), grad);
+        p.setPen(QColor(255, 255, 255, 160));
+        QFont f = p.font();
+        f.setPointSize(28);
+        p.setFont(f);
+        p.drawText(pm.rect(), Qt::AlignCenter, "♪");
+        p.end();
             m_albumArt->setPixmap(pm);
             m_albumArt->setText("");
             m_albumArt->setStyleSheet("border-radius: 12px;");
@@ -376,12 +377,12 @@ void MediaWindow::onCoverArtChanged(const QPixmap &art)
     } else {
         // Scale to fit 96x96 with rounded corners via stylesheet
         const QPixmap scaled = art.scaled(
-            96, 96, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        // Crop to exact 96x96 from center
+            80, 80, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        // Crop to exact 80x80 from center
         const QPixmap cropped = scaled.copy(
-            (scaled.width()  - 96) / 2,
-            (scaled.height() - 96) / 2,
-            96, 96);
+            (scaled.width()  - 80) / 2,
+            (scaled.height() - 80) / 2,
+            80, 80);
         m_albumArt->setPixmap(cropped);
         m_albumArt->setText("");
         m_albumArt->setStyleSheet("border-radius: 8px;");
@@ -396,17 +397,17 @@ void MediaWindow::onError(const QString &msg)
     Q_UNUSED(msg)
     // Mark the track as unplayable in the UI
     m_trackTitle->setStyleSheet(
-        "font-size: 12pt; font-weight: bold; color: #FF4757;");
+        "font-size: 11pt; font-weight: bold; color: #FF4757;");
     m_artistName->setText("Cannot play this file — skipping...");
-    m_artistName->setStyleSheet("font-size: 11pt; color: #FF475770;");
+    m_artistName->setStyleSheet("font-size: 9pt; color: #FF475770;");
     showPlaceholderArt();
 
     // Auto-skip to next after 1.5s
     QTimer::singleShot(1500, this, [this] {
         // Restore normal styles before playing next
         m_trackTitle->setStyleSheet(
-            "font-size: 12pt; font-weight: bold; color: #FFFFFF;");
-        m_artistName->setStyleSheet("font-size: 10pt; color: #B3B3B7;");
+            "font-size: 11pt; font-weight: bold; color: #FFFFFF;");
+        m_artistName->setStyleSheet("font-size: 9pt; color: #B3B3B7;");
         onNext();
     });
 }
@@ -463,8 +464,8 @@ void MediaWindow::playTrack(int row)
     m_currentTrack = row;
     // Restore normal title style in case previous track had an error
     m_trackTitle->setStyleSheet(
-        "font-size: 12pt; font-weight: bold; color: #FFFFFF;");
-    m_artistName->setStyleSheet("font-size: 10pt; color: #B3B3B7;");
+        "font-size: 11pt; font-weight: bold; color: #FFFFFF;");
+    m_artistName->setStyleSheet("font-size: 9pt; color: #B3B3B7;");
     m_player->stop();
     m_player->setSource(m_playlist->urlAt(row), true);
     m_trackTitle->setText(m_playlist->titleAt(row));
@@ -489,7 +490,7 @@ void MediaWindow::onDurationChanged(qint64 ms)
 
 void MediaWindow::onStateChanged(bool playing)
 {
-    m_playPauseBtn->setText(playing ? "⏸" : "▶");
+    m_playPauseBtn->setText(playing ? "||" : "▶");
 }
 
 void MediaWindow::onProgressSliderMoved(int value)

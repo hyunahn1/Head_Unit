@@ -1,12 +1,16 @@
 /**
  * @file main.cpp (navigation module)
+ *
+ * Wayland 클라이언트로 hu_shell의 HUCompositor에 연결합니다.
  */
+
 #include "NavigationService.h"
 #include "NavigationWindow.h"
 #include "ShellClient.h"
 #include "GearStateManager.h"
 
 #include <QApplication>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -20,12 +24,14 @@ int main(int argc, char *argv[])
     auto *service     = new NavigationService(&app);
     auto *window      = new NavigationScreen(gearManager);
     window->setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
+    window->setWindowTitle("navigation"); // HUCompositor 식별자
 
     if (standalone) {
-        window->setGeometry(0, 40, 1024, 528);
-        window->show();
+        window->showFullScreen();
+        qDebug() << "[hu_module_navigation] standalone mode";
     } else {
         auto *bridge = new ShellClient(socketPath, &app);
+
         QObject::connect(bridge, &ShellClient::gearStateUpdated,
                          gearManager, [gearManager](GearState g) {
             gearManager->setGear(g, "shell");
@@ -36,11 +42,13 @@ int main(int argc, char *argv[])
                 bridge->requestGearChange(g, src);
         });
         QObject::connect(bridge, &ShellClient::shellShutdown, &app, &QApplication::quit);
-        QObject::connect(bridge, &ShellClient::connected, [bridge, window]() {
-            window->show();  // X11 window must be mapped before embedding
-            bridge->notifyReady(window->winId());
+
+        QObject::connect(bridge, &ShellClient::connected, [window]() {
+            window->showFullScreen();
         });
+
         bridge->connectToShell();
     }
+
     return app.exec();
 }

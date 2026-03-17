@@ -9,4 +9,5 @@ IMAGE_FEATURES += "ssh-server-openssh"
 IMAGE_INSTALL:append = " \
     instrument-cluster \
     qtbase-plugins \
+    vsomeip3 \
 "

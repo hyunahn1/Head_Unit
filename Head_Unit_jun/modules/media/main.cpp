@@ -1,6 +1,9 @@
 /**
  * @file main.cpp (media module)
  *
+ * Wayland 클라이언트로 hu_shell의 HUCompositor에 연결합니다.
+ * 환경변수: QT_QPA_PLATFORM=wayland, WAYLAND_DISPLAY=wayland-hu (ModuleController가 설정)
+ *
  * standalone 실행: ./hu_module_media
  * shell 관리 모드: ./hu_module_media /tmp/hu_shell_media.sock
  */
@@ -23,28 +26,28 @@ int main(int argc, char *argv[])
     auto *gearManager = new GearStateManager(&app);
     auto *window      = new MediaWindow(gearManager);
     window->setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
-    window->setAttribute(Qt::WA_TranslucentBackground, false);
+    window->setWindowTitle("media"); // HUCompositor 식별자
 
     if (standalone) {
-        window->setGeometry(0, 40, 1024, 528);
-        window->show();
+        window->showFullScreen();
         qDebug() << "[hu_module_media] standalone mode";
     } else {
         auto *bridge = new ShellClient(socketPath, &app);
+
         QObject::connect(bridge, &ShellClient::gearStateUpdated,
                          gearManager, [gearManager](GearState g) {
             gearManager->setGear(g, "shell");
         });
-        // GearPanel 입력 → shell → VSomeIPClient::publishGear → IC
         QObject::connect(gearManager, &GearStateManager::gearChanged,
                          bridge, [bridge](GearState g, const QString &src) {
-            if (src != "shell")  // shell에서 온 것은 echo 방지
+            if (src != "shell")
                 bridge->requestGearChange(g, src);
         });
         QObject::connect(bridge, &ShellClient::shellShutdown, &app, &QApplication::quit);
-        QObject::connect(bridge, &ShellClient::connected, [bridge, window]() {
-            window->show();  // X11 window must be mapped before embedding
-            bridge->notifyReady(window->winId());
+
+        // Wayland: 바로 show() — winId embedding 불필요
+        QObject::connect(bridge, &ShellClient::connected, [window]() {
+            window->showFullScreen();
         });
 
         bridge->connectToShell();

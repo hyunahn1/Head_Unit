@@ -4,8 +4,6 @@ add_executable(hu_module_navigation
     service/NavigationService.cpp
     ui/NavigationWindow.h
     ui/NavigationWindow.cpp
-    ../common/widgets/GearPanel.h
-    ../common/widgets/GearPanel.cpp
 )
 
 target_include_directories(hu_module_navigation PRIVATE
@@ -17,6 +15,7 @@ target_include_directories(hu_module_navigation PRIVATE
 
 target_link_libraries(hu_module_navigation PRIVATE
     hu_core
+    hu_common
     Qt5::Core
     Qt5::Widgets
     Qt5::Network

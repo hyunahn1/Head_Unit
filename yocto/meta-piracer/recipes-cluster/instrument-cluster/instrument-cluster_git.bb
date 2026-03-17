@@ -13,10 +13,11 @@ B = "${WORKDIR}/build"
 # Suppress checksum warnings for externalsrc helper symlinks (oe-workdir/oe-logs).
 EXTERNALSRC_SYMLINKS = ""
 
-DEPENDS += "qtbase qtserialport"
+DEPENDS += "qtbase qtserialport vsomeip3 boost"
 
 EXTRA_OECMAKE += " \
     -DCMAKE_BUILD_TYPE=Release \
+    -DIC_HAS_VSOMEIP=ON \
 "
 
 do_install:append() {

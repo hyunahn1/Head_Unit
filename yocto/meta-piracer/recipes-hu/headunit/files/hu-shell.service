@@ -1,14 +1,20 @@
 [Unit]
-Description=PiRacer Head Unit Shell
+Description=PiRacer Head Unit Shell (Wayland Compositor)
 After=network.target
+# Weston 의존성 없음: hu_shell 자신이 QtWayland Compositor로 동작
 
 [Service]
 Type=simple
-Environment=DISPLAY=:0
+User=root
+# hu_shell은 Wayland Compositor: eglfs로 DRM/KMS에 직접 접근
+Environment=QT_QPA_PLATFORM=eglfs
+# XDG_RUNTIME_DIR: 모듈 프로세스들이 wayland-hu 소켓을 찾는 경로
+Environment=XDG_RUNTIME_DIR=/run/user/0
+Environment=QT_FONT_DPI=96
 Environment=VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
 ExecStart=/usr/bin/hu_shell
 Restart=always
-RestartSec=2
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

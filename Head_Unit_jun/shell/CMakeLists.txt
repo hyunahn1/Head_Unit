@@ -12,15 +12,23 @@ set(SHELL_SOURCES
     widgets/StatusBar.cpp
     widgets/GlowOverlay.h
     widgets/GlowOverlay.cpp
-    widgets/SplashScreen.h
-    widgets/SplashScreen.cpp
-    widgets/FallbackContentWidget.h
-    widgets/FallbackContentWidget.cpp
     widgets/GearPanel.h
     widgets/GearPanel.cpp
+    widgets/SplashScreen.h
+    widgets/SplashScreen.cpp
     widgets/ReverseCameraWindow.h
     widgets/ReverseCameraWindow.cpp
+    ${CMAKE_SOURCE_DIR}/resources/headunit.qrc
 )
+
+if(Qt5WaylandCompositor_FOUND AND Qt5OpenGL_FOUND)
+    list(APPEND SHELL_SOURCES
+        HUCompositor.h
+        HUCompositor.cpp
+        ModuleSurfaceWidget.h
+        ModuleSurfaceWidget.cpp
+    )
+endif()
 
 add_executable(hu_shell ${SHELL_SOURCES})
 
@@ -35,5 +43,12 @@ target_link_libraries(hu_shell PRIVATE
     Qt5::Widgets
     Qt5::Network
 )
+
+if(Qt5WaylandCompositor_FOUND AND Qt5OpenGL_FOUND)
+    target_link_libraries(hu_shell PRIVATE
+        Qt5::WaylandCompositor
+        Qt5::OpenGL
+    )
+endif()
 
 install(TARGETS hu_shell RUNTIME DESTINATION bin)
