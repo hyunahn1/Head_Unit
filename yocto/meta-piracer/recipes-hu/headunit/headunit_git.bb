@@ -24,7 +24,7 @@ EXTRA_OECMAKE += " \
 
 # SysVinit init.d 스크립트 설정
 INITSCRIPT_NAME = "hu-shell"
-INITSCRIPT_PARAMS = "defaults 99"
+INITSCRIPT_PARAMS = "defaults 98"
 
 do_install:append() {
     # init.d 스크립트 설치

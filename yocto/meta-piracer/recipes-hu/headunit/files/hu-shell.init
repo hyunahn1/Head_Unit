@@ -9,9 +9,11 @@
 ### END INIT INFO
 
 export QT_QPA_PLATFORM=eglfs
+export QT_QPA_EGLFS_KMS_CONFIG=/usr/bin/config/kms_headunit.json
 export XDG_RUNTIME_DIR=/run/user/0
 export QT_FONT_DPI=96
 export VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
+export QT_QPA_EGLFS_ALWAYS_SET_MODE=1
 
 case "$1" in
     start)

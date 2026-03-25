@@ -27,6 +27,8 @@ if(Qt5WaylandCompositor_FOUND AND Qt5OpenGL_FOUND)
         HUCompositor.cpp
         ModuleSurfaceWidget.h
         ModuleSurfaceWidget.cpp
+        ClusterOutputWindow.h
+        ClusterOutputWindow.cpp
     )
 endif()
 

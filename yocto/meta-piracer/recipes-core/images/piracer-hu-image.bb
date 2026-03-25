@@ -8,6 +8,7 @@ IMAGE_FEATURES += "ssh-server-openssh"
 
 IMAGE_INSTALL:append = " \
     headunit \
+    instrument-cluster \
     qtbase-plugins \
     qtwayland \
     qtwayland-plugins \

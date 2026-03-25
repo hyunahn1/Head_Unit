@@ -11,6 +11,8 @@
 #include <QWaylandSurface>
 #include <QDebug>
 
+const QString HUCompositor::kClusterTitle = QStringLiteral("PiRacer Dashboard");
+
 HUCompositor::HUCompositor(QObject *parent)
     : QWaylandCompositor(parent)
 {
@@ -33,6 +35,21 @@ void HUCompositor::setupOutput(const QSize &screenSize)
     m_output->setCurrentMode(mode);
 }
 
+void HUCompositor::setupClusterOutput(QWindow *window, const QSize &clusterSize)
+{
+    if (!m_clusterOutput) {
+        m_clusterOutput = new QWaylandOutput(this, window);
+    }
+    QRect geo(QPoint(0, 0), clusterSize);
+    m_clusterOutput->setAvailableGeometry(geo);
+
+    QWaylandOutputMode mode(clusterSize, 60000);
+    m_clusterOutput->addMode(mode, true /*preferred*/);
+    m_clusterOutput->setCurrentMode(mode);
+
+    qDebug() << "[HUCompositor] cluster output configured:" << clusterSize;
+}
+
 void HUCompositor::create()
 {
     m_xdgShell = new QWaylandXdgShell(this);
@@ -41,30 +58,57 @@ void HUCompositor::create()
 
     QWaylandCompositor::create();
     qDebug() << "[HUCompositor] created, socket=" << socketName()
-             << "XDG_RUNTIME_DIR=" << qgetenv("XDG_RUNTIME_DIR");
+             << "XDG_RUNTIME_DIR=" << qgetenv("XDG_RUNTIME_DIR")
+             << "clusterOutput=" << (m_clusterOutput ? "yes" : "no");
 }
 
 void HUCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
                                          QWaylandXdgSurface  *xdgSurface)
 {
     QWaylandSurface *surface = xdgSurface->surface();
-
-    // Send fullscreen configure so clients resize to fill the output
-    if (m_output) {
-        const QSize sz = m_output->geometry().size();
-        toplevel->sendFullscreen(sz);
-    }
-
     const QString title = toplevel->title();
+
     if (!title.isEmpty()) {
-        registerSurface(title, surface);
+        dispatchSurface(toplevel, surface, title);
     } else {
         connect(toplevel, &QWaylandXdgToplevel::titleChanged,
                 this, [this, toplevel, surface]() {
             const QString t = toplevel->title();
-            if (!t.isEmpty() && !m_surfaces.contains(t))
-                registerSurface(t, surface);
+            if (!t.isEmpty())
+                dispatchSurface(toplevel, surface, t);
         });
+    }
+}
+
+void HUCompositor::dispatchSurface(QWaylandXdgToplevel *toplevel,
+                                    QWaylandSurface     *surface,
+                                    const QString       &title)
+{
+    if (title == kClusterTitle) {
+        // Instrument cluster connects as a Wayland client → render on DSI-1
+        if (m_clusterOutput) {
+            toplevel->sendFullscreen(m_clusterOutput->geometry().size());
+            qDebug() << "[HUCompositor] cluster surface registered, size="
+                     << m_clusterOutput->geometry().size();
+        } else {
+            // No cluster output configured — fall back to main output size
+            if (m_output)
+                toplevel->sendFullscreen(m_output->geometry().size());
+            qWarning() << "[HUCompositor] cluster surface arrived but no cluster output configured";
+        }
+
+        if (m_surfaces.contains(title)) return;
+        m_surfaces.insert(title, surface);
+        connect(surface, &QWaylandSurface::destroyed, this, [this, title]() {
+            m_surfaces.remove(title);
+            emit clusterSurfaceDestroyed();
+        });
+        emit clusterSurfaceCreated(surface);
+    } else {
+        // Regular HU module → main HDMI output
+        if (m_output)
+            toplevel->sendFullscreen(m_output->geometry().size());
+        registerSurface(title, surface);
     }
 }
 

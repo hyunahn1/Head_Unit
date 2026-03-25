@@ -30,6 +30,7 @@ class GearStateManager;
 class ILedController;
 class HUCompositor;
 class ModuleSurfaceWidget;
+class ClusterOutputWindow;
 class ModuleController;
 class ModuleBridge;
 
@@ -56,6 +57,7 @@ private slots:
 #ifdef HU_WAYLAND_COMPOSITOR
     void onModuleSurfaceCreated(const QString &moduleName, QWaylandSurface *surface);
     void onModuleSurfaceDestroyed(const QString &moduleName);
+    void onClusterSurfaceCreated(QWaylandSurface *surface);
 #endif
 
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -64,6 +66,7 @@ private:
     void setupUI();
     void setupModules();
     void setupConnections();
+    void setupClusterWindow();
     void switchToModule(int index);
     void broadcastToAllModules(std::function<void(ModuleBridge *)> fn);
 
@@ -82,7 +85,8 @@ private:
 
     // ── Wayland 컴포지터 ──────────────────────────────────────────────
 #ifdef HU_WAYLAND_COMPOSITOR
-    HUCompositor         *m_compositor  = nullptr;
+    HUCompositor         *m_compositor     = nullptr;
+    ClusterOutputWindow  *m_clusterWindow  = nullptr;
 #endif
 
     // ── 멀티프로세스 모듈 관리 (ModuleController + ModuleBridge 쌍) ──

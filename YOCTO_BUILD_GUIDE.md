@@ -254,8 +254,10 @@ sudo bmaptool copy \
 # No password required (debug-tweaks image)
 ssh root@<Pi IP address>
 
-# Example
-ssh root@192.168.86.56
+# Example (IP may change — use hostname if unsure)
+ssh root@raspberrypi4-64.lan
+# or by IP
+ssh root@192.168.86.30
 ```
 
 > If you see an SSH host key error after reflashing:
@@ -588,8 +590,8 @@ ERROR:    /home/seame/SEA_ME/Head_Unit/yocto/poky/meta
 ### SSH host key error after reflashing
 
 ```bash
-ssh-keygen -R '192.168.86.56'
-ssh root@192.168.86.56
+ssh-keygen -R '192.168.86.30'
+ssh root@192.168.86.30
 ```
 
 ### SD card "Device or resource busy" during flash
@@ -633,7 +635,7 @@ bitbake -c cleanall headunit && bitbake piracer-hu-image
 bash flash.sh /dev/sda
 
 # ── SSH into the Pi ───────────────────────────────────────────────
-ssh root@192.168.86.56
+ssh root@raspberrypi4-64.lan   # hostname (recommended — works even if IP changes)
 
 # ── Manually run hu_shell on Pi (with logs) ───────────────────────
 killall hu_shell 2>/dev/null; sleep 1

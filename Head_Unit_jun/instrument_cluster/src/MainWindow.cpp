@@ -57,8 +57,8 @@ MainWindow::MainWindow(QWidget *parent)
     , m_vsomeipGear(nullptr)
 #endif
 {
-    // Set fixed window size
-    setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    // Allow compositor to control size in Wayland mode; use initial size only
+    resize(WINDOW_WIDTH, WINDOW_HEIGHT);
     setWindowTitle("PiRacer Dashboard");
     
     // Initialize components

@@ -21,7 +21,9 @@
 #ifdef HU_WAYLAND_COMPOSITOR
 #include "HUCompositor.h"
 #include "ModuleSurfaceWidget.h"
+#include "ClusterOutputWindow.h"
 #include <QWaylandSurface>
+#include <QGuiApplication>
 #endif
 #include "ModuleController.h"
 #include "ModuleBridge.h"
@@ -167,10 +169,17 @@ void ShellWindow::setupModules()
     m_compositor->setupOutput(QSize(m_screenW, m_screenH));
     m_compositor->create();
 
+    // Cluster window setup is deferred until after show() so that the eglfs
+    // DRM master is fully established on the primary screen (HDMI-A-1) before
+    // we attempt to set a mode on the secondary screen (DSI-1).
+    QTimer::singleShot(500, this, &ShellWindow::setupClusterWindow);
+
     connect(m_compositor, &HUCompositor::moduleSurfaceCreated,
             this, &ShellWindow::onModuleSurfaceCreated);
     connect(m_compositor, &HUCompositor::moduleSurfaceDestroyed,
             this, &ShellWindow::onModuleSurfaceDestroyed);
+    connect(m_compositor, &HUCompositor::clusterSurfaceCreated,
+            this, &ShellWindow::onClusterSurfaceCreated);
 #endif
 
     // ── 2. 각 모듈: ModuleBridge(IPC 서버) + ModuleController(프로세스 감시) ──
@@ -191,6 +200,32 @@ void ShellWindow::setupModules()
         );
         m_controllers[i]->launch();
     }
+}
+
+void ShellWindow::setupClusterWindow()
+{
+#ifdef HU_WAYLAND_COMPOSITOR
+    QScreen *clusterScreen = nullptr;
+    const auto screens = QGuiApplication::screens();
+    for (QScreen *s : screens) {
+        if (s->name().contains("DSI", Qt::CaseInsensitive)) {
+            clusterScreen = s;
+            break;
+        }
+    }
+    if (!clusterScreen && screens.size() > 1)
+        clusterScreen = screens.at(1);
+
+    if (clusterScreen) {
+        qDebug() << "[Shell] cluster screen found:" << clusterScreen->name()
+                 << clusterScreen->size();
+        m_clusterWindow = new ClusterOutputWindow(clusterScreen, this);
+        m_compositor->setupClusterOutput(m_clusterWindow, clusterScreen->size());
+        m_clusterWindow->setWaylandOutput(m_compositor->clusterOutput());
+    } else {
+        qWarning() << "[Shell] no DSI screen found — cluster display disabled";
+    }
+#endif
 }
 
 void ShellWindow::setupConnections()
@@ -286,6 +321,13 @@ void ShellWindow::onModuleSurfaceDestroyed(const QString &moduleName)
     if (moduleName == kModules[m_activeIndex].waylandName && m_surfaceWidget) {
         m_surfaceWidget->clearSurface();
     }
+}
+
+void ShellWindow::onClusterSurfaceCreated(QWaylandSurface *surface)
+{
+    qDebug() << "[Shell] cluster surface connected (PiRacerDashboard on DSI-1)";
+    if (m_clusterWindow)
+        m_clusterWindow->setSurface(surface);
 }
 #endif
 

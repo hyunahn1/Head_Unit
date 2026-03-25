@@ -2,9 +2,9 @@ SUMMARY = "PiRacer Instrument Cluster"
 DESCRIPTION = "Qt-based PiRacer instrument cluster dashboard"
 LICENSE = "CLOSED"
 
-SRC_URI = "file://piracer-cluster.service"
+SRC_URI = "file://piracer-cluster.init"
 
-inherit cmake_qt5 pkgconfig systemd externalsrc
+inherit cmake_qt5 pkgconfig update-rc.d externalsrc
 
 # Use the repository's local source tree during development.
 EXTERNALSRC = "${TOPDIR}/../../Head_Unit_jun/instrument_cluster"
@@ -20,15 +20,20 @@ EXTRA_OECMAKE += " \
     -DIC_HAS_VSOMEIP=ON \
 "
 
+# SysVinit: start at priority 99 (after hu-shell at 98).
+# hu-shell must start first to expose the Wayland compositor socket.
+# PiRacerDashboard is the vSomeIP routing manager, but vSomeIP clients
+# retry automatically, so boot order for vSomeIP is not critical.
+INITSCRIPT_NAME = "piracer-cluster"
+INITSCRIPT_PARAMS = "defaults 99"
+
 do_install:append() {
-    install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/piracer-cluster.service ${D}${systemd_system_unitdir}/piracer-cluster.service
+    install -d ${D}${sysconfdir}/init.d
+    install -m 0755 ${WORKDIR}/piracer-cluster.init ${D}${sysconfdir}/init.d/piracer-cluster
 }
 
 FILES:${PN} += " \
-    ${bindir}/* \
-    ${systemd_system_unitdir}/piracer-cluster.service \
+    ${bindir}/PiRacerDashboard \
+    ${bindir}/config/ \
+    ${sysconfdir}/init.d/piracer-cluster \
 "
-
-SYSTEMD_SERVICE:${PN} = "piracer-cluster.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"

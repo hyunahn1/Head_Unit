@@ -18,7 +18,7 @@ option(IC_HAS_VSOMEIP "Enable VSOMEIP for Instrument Cluster gear IPC" OFF)
 
 if(IC_HAS_VSOMEIP)
     find_package(vsomeip3 REQUIRED)
-    set(VSOMEIP_INCLUDE_DIR "")
+    get_target_property(VSOMEIP_INCLUDE_DIR vsomeip3 INTERFACE_INCLUDE_DIRECTORIES)
     set(VSOMEIP_LIBRARY vsomeip3)
     message(STATUS "VSOMEIP (forced ON) - gear IPC enabled")
     add_compile_definitions(IC_HAS_VSOMEIP)

@@ -21,6 +21,7 @@ class QWaylandXdgSurface;
 class QWaylandXdgToplevel;
 class QWaylandSurface;
 class QWaylandOutput;
+class QWindow;
 
 class HUCompositor : public QWaylandCompositor
 {
@@ -31,14 +32,18 @@ public:
     ~HUCompositor() override = default;
 
     void setupOutput(const QSize &screenSize);
+    void setupClusterOutput(QWindow *window, const QSize &clusterSize);
     void create() override;
 
     QWaylandSurface *surfaceForModule(const QString &moduleName) const;
-    QWaylandOutput  *mainOutput() const { return m_output; }
+    QWaylandOutput  *mainOutput()    const { return m_output; }
+    QWaylandOutput  *clusterOutput() const { return m_clusterOutput; }
 
 signals:
     void moduleSurfaceCreated(const QString &moduleName, QWaylandSurface *surface);
     void moduleSurfaceDestroyed(const QString &moduleName);
+    void clusterSurfaceCreated(QWaylandSurface *surface);
+    void clusterSurfaceDestroyed();
 
 private slots:
     void onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
@@ -46,10 +51,16 @@ private slots:
 
 private:
     void registerSurface(const QString &name, QWaylandSurface *surface);
+    void dispatchSurface(QWaylandXdgToplevel *toplevel,
+                         QWaylandSurface     *surface,
+                         const QString       &title);
 
-    QWaylandXdgShell                 *m_xdgShell = nullptr;
-    QWaylandOutput                   *m_output   = nullptr;
+    QWaylandXdgShell                 *m_xdgShell      = nullptr;
+    QWaylandOutput                   *m_output        = nullptr;
+    QWaylandOutput                   *m_clusterOutput = nullptr;
     QMap<QString, QWaylandSurface *>  m_surfaces;
+
+    static const QString kClusterTitle; // "PiRacerDashboard"
 };
 
 #endif // HUCOMPOSITOR_H
