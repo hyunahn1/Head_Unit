@@ -11,6 +11,7 @@
 
 #include "VSomeIPClient.h"
 #include <QDebug>
+#include <QMetaObject>
 
 #ifdef HU_HAS_VSOMEIP
 #include <vector>
@@ -137,7 +138,9 @@ void VSomeIPClient::onAvailability(vsomeip::service_t /*service*/,
     } else {
         qWarning() << "[VSomeIP] IC service 0x1234 UNAVAILABLE - Instrument Cluster 연결 끊김";
     }
-    // m_connected and m_serviceAvailable are atomics — safe to write from any thread.
-    // StatusBar polls isConnected() via timer; no signal emission needed here.
+    // onAvailability runs on a vsomeip thread — emit signal on Qt main thread.
+    QMetaObject::invokeMethod(this, [this, available]() {
+        emit connectionStatusChanged(available);
+    }, Qt::QueuedConnection);
 }
 #endif
