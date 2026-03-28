@@ -27,6 +27,8 @@ public:
     explicit VSomeIPGearReceiver(QObject *parent = nullptr);
     ~VSomeIPGearReceiver() override;
 
+    void sendSpeed(float kmh);
+
 signals:
     void gearReceived(const QString &gear);
 
@@ -39,6 +41,9 @@ private:
     std::thread m_worker;
     std::atomic<bool> m_running{false};
     std::atomic<bool> m_registered{false};
+
+    static constexpr vsomeip::event_t       kSpeedEventId      = 0x8001;
+    static constexpr vsomeip::eventgroup_t  kSpeedEventGroupId = 0x0001;
 #endif
 };
 

@@ -37,17 +37,21 @@ void HUCompositor::setupOutput(const QSize &screenSize)
 
 void HUCompositor::setupClusterOutput(QWindow *window, const QSize &clusterSize)
 {
+    // Physical DSI is portrait (400x1280) but cluster app expects landscape.
+    // Report swapped dimensions so the cluster renders in landscape orientation.
+    const QSize landscapeSize(clusterSize.height(), clusterSize.width());
+
     if (!m_clusterOutput) {
         m_clusterOutput = new QWaylandOutput(this, window);
     }
-    QRect geo(QPoint(0, 0), clusterSize);
+    QRect geo(QPoint(0, 0), landscapeSize);
     m_clusterOutput->setAvailableGeometry(geo);
 
-    QWaylandOutputMode mode(clusterSize, 60000);
+    QWaylandOutputMode mode(landscapeSize, 60000);
     m_clusterOutput->addMode(mode, true /*preferred*/);
     m_clusterOutput->setCurrentMode(mode);
 
-    qDebug() << "[HUCompositor] cluster output configured:" << clusterSize;
+    qDebug() << "[HUCompositor] cluster output configured (landscape):" << landscapeSize;
 }
 
 void HUCompositor::create()

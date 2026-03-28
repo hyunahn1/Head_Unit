@@ -35,5 +35,9 @@ do_install:append() {
 FILES:${PN} += " \
     ${bindir}/PiRacerDashboard \
     ${bindir}/config/ \
+    ${bindir}/python/ \
     ${sysconfdir}/init.d/piracer-cluster \
 "
+
+# Python bridge runtime dependencies
+RDEPENDS:${PN} += "python3 python3-can python3-pyserial python3-core python3-json"

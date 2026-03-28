@@ -631,6 +631,11 @@ void MainWindow::onSpeedDataReceived(float pulsePerSec)
     m_speedometer->setSpeed(speedKmh);
     m_rpmGauge->setRPM(rpm);
     updateDirectionIndicators();
+
+    // Forward speed to Head Unit via vsomeip
+    if (m_vsomeipGear) {
+        m_vsomeipGear->sendSpeed(speedKmh);
+    }
     
     // Update max speed
     if (speedKmh > m_maxSpeed) {

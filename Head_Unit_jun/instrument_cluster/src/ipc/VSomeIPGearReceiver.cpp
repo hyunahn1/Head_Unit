@@ -9,6 +9,8 @@
 #include <QDebug>
 
 #ifdef IC_HAS_VSOMEIP
+#include <cstring>
+#include <set>
 #include <vector>
 
 namespace {
@@ -65,10 +67,30 @@ void VSomeIPGearReceiver::onState(vsomeip::state_type_e state)
     }
     if (state == vsomeip::state_type_e::ST_REGISTERED) {
         m_registered = true;
+        // Offer speed event so HU can subscribe
+        std::set<vsomeip::eventgroup_t> groups = {kSpeedEventGroupId};
+        m_app->offer_event(kServiceId, kInstanceId, kSpeedEventId, groups,
+                           vsomeip::event_type_e::ET_FIELD);
         m_app->offer_service(kServiceId, kInstanceId);
         return;
     }
     m_registered = false;
+}
+
+void VSomeIPGearReceiver::sendSpeed(float kmh)
+{
+#ifdef IC_HAS_VSOMEIP
+    if (!m_app || !m_registered.load()) {
+        return;
+    }
+    auto payload = vsomeip::runtime::get()->create_payload();
+    std::vector<vsomeip::byte_t> data(4);
+    std::memcpy(data.data(), &kmh, 4);
+    payload->set_data(data);
+    m_app->notify(kServiceId, kInstanceId, kSpeedEventId, payload);
+#else
+    (void)kmh;
+#endif
 }
 
 void VSomeIPGearReceiver::onMessage(const std::shared_ptr<vsomeip::message> &msg)

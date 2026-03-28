@@ -14,12 +14,16 @@
 #include <QMetaObject>
 
 #ifdef HU_HAS_VSOMEIP
+#include <cstring>
+#include <set>
 #include <vector>
 
 namespace {
-constexpr vsomeip::service_t kServiceId = 0x1234;
-constexpr vsomeip::instance_t kInstanceId = 0x0001;
-constexpr vsomeip::method_t kGearMethodId = 0x8002;
+constexpr vsomeip::service_t      kServiceId         = 0x1234;
+constexpr vsomeip::instance_t     kInstanceId        = 0x0001;
+constexpr vsomeip::method_t       kGearMethodId      = 0x8002;
+constexpr vsomeip::event_t        kSpeedEventId      = 0x8001;
+constexpr vsomeip::eventgroup_t   kSpeedEventGroupId = 0x0001;
 }
 #endif
 
@@ -116,6 +120,23 @@ void VSomeIPClient::onState(vsomeip::state_type_e state)
                 (void)s; (void)i;
                 onAvailability(s, i, available);
             });
+
+        // Subscribe to speed event (0x8001) from IC
+        std::set<vsomeip::eventgroup_t> groups = {kSpeedEventGroupId};
+        m_app->request_event(kServiceId, kInstanceId, kSpeedEventId, groups);
+        m_app->register_message_handler(kServiceId, kInstanceId, kSpeedEventId,
+            [this](const std::shared_ptr<vsomeip::message> &msg) {
+                if (!msg) return;
+                auto pl = msg->get_payload();
+                if (!pl || pl->get_length() < 4) return;
+                float kmh = 0.0f;
+                std::memcpy(&kmh, pl->get_data(), 4);
+                m_speed = kmh;
+                QMetaObject::invokeMethod(this, [this, kmh]() {
+                    emit speedChanged(kmh);
+                }, Qt::QueuedConnection);
+            });
+        m_app->subscribe(kServiceId, kInstanceId, kSpeedEventGroupId);
 
         m_app->request_service(kServiceId, kInstanceId);
         return;

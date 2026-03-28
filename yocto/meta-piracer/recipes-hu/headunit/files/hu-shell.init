@@ -19,6 +19,8 @@ case "$1" in
     start)
         mkdir -p /run/user/0
         chmod 700 /run/user/0
+        # Setup CAN interface
+        ip link set can0 type can bitrate 500000 2>/dev/null && ip link set can0 up 2>/dev/null && echo "can0 up" || echo "can0 not available"
         /usr/bin/hu_shell &
         echo "hu_shell started"
         ;;

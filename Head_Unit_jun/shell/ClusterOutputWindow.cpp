@@ -107,7 +107,9 @@ void ClusterOutputWindow::paintGL()
                 QRectF(0, 0, width(), height()),
                 QRect(0, 0, width(), height())
             );
-            m_blitter.blit(tex->textureId(), target,
+            QMatrix4x4 rot;
+            rot.rotate(90.0f, 0.0f, 0.0f, 1.0f);
+            m_blitter.blit(tex->textureId(), rot * target,
                            QOpenGLTextureBlitter::OriginTopLeft);
             m_blitter.release();
         }

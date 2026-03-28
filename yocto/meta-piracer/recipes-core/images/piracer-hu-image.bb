@@ -16,6 +16,13 @@ IMAGE_INSTALL:append = " \
     ttf-dejavu-sans \
     ttf-dejavu-common \
     fontconfig \
+    can-utils \
+    python3 \
+    python3-can \
+    python3-pyserial \
+    python3-core \
+    python3-json \
+    python3-misc \
 "
 
 # weston 제거: hu_shell이 QtWayland Compositor로 동작하므로 별도 Weston 불필요
