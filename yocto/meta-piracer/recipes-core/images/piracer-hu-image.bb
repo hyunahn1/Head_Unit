@@ -23,6 +23,7 @@ IMAGE_INSTALL:append = " \
     python3-core \
     python3-json \
     python3-misc \
+    python3-piracer \
 "
 
 # weston 제거: hu_shell이 QtWayland Compositor로 동작하므로 별도 Weston 불필요
