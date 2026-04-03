@@ -11,6 +11,8 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
+inherit allarch python3-dir
+
 RDEPENDS:${PN} = "python3-core"
 
 do_install() {
@@ -21,4 +23,4 @@ do_install() {
     install -m 0644 ${WORKDIR}/piracer/cameras.py   ${D}${PYTHON_SITEPACKAGES_DIR}/piracer/
 }
 
-FILES:${PN} = "${PYTHON_SITEPACKAGES_DIR}/piracer"
+FILES:${PN} += "${PYTHON_SITEPACKAGES_DIR}/piracer"

@@ -13,12 +13,19 @@ Version: 1.0.0
 
 import json
 import os
+import subprocess
 import sys
 import time
 import struct
 import fcntl
 from enum import Enum
 from typing import Dict, Optional
+
+# i2c-dev 모듈 자동 로드 (PiRacer HAT I2C 통신 필요)
+try:
+    subprocess.run(["modprobe", "i2c-dev"], check=False, capture_output=True)
+except Exception:
+    pass
 
 from battery import BatteryMonitor, calculate_battery_percent
 
@@ -80,7 +87,7 @@ class PiRacerBridge:
         self.can_bus = None
         self.last_can_speed_kmh = 0.0
         self.last_can_rpm = 0.0
-        self.battery_monitor = BatteryMonitor(capacity_mah=2500.0, alpha=0.12)
+        self.battery_monitor = BatteryMonitor(capacity_mah=2500.0, alpha=0.12, cells=3)
         self.gamepad = None
         self.drive_mode = DriveMode.NEUTRAL
         self.prev_buttons = {"x": False, "a": False, "b": False, "y": False}
