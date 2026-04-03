@@ -190,7 +190,7 @@ class PiRacerBridge:
         # Head Unit(IPC)에서 온 기어가 있으면 반영
         self.update_drive_mode_from_snapshot()
 
-        if self.gamepad is None or self.piracer is None:
+        if self.gamepad is None:
             if self.piracer is not None:
                 self.piracer.set_throttle_percent(0.0)
                 self.piracer.set_steering_percent(0.0)
@@ -232,6 +232,10 @@ class PiRacerBridge:
         self.prev_buttons["a"] = a_pressed
         self.prev_buttons["b"] = b_pressed
         self.prev_buttons["y"] = y_pressed
+
+        # 모터 제어 - piracer HAT 없으면 기어 UI만 업데이트하고 스킵
+        if self.piracer is None:
+            return
 
         # 기어에 맞게 스로틀 적용
         if self.drive_mode == DriveMode.NEUTRAL or self.drive_mode == DriveMode.BRAKE:

@@ -4,7 +4,7 @@ LICENSE = "MIT"
 
 inherit core-image
 
-IMAGE_FEATURES += "ssh-server-openssh"
+IMAGE_FEATURES += "ssh-server-openssh debug-tweaks"
 
 IMAGE_INSTALL:append = " \
     headunit \
@@ -24,6 +24,8 @@ IMAGE_INSTALL:append = " \
     python3-json \
     python3-misc \
     python3-piracer \
+    python3-smbus2 \
+    i2c-tools \
 "
 
 # weston 제거: hu_shell이 QtWayland Compositor로 동작하므로 별도 Weston 불필요
