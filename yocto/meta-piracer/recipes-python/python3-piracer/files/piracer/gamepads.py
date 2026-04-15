@@ -165,9 +165,56 @@ class ShanWanGamepad(Joystick):
         super(ShanWanGamepad, self).__init__()
         super(ShanWanGamepad, self).init()
         self.gamepad_input = ShanWanGamepadInput()
+        # ShanWan과 Linux joydev 번호가 다름. Xbox 360(xpad)은 A=0,B=1,X=2,Y=3, 우스틱=축3·4.
+        name = (getattr(self, "js_name", "") or "").split("\x00", 1)[0].lower()
+        self._layout = (
+            "xbox360"
+            if "microsoft" in name and "x-box" in name
+            else "shanwan"
+        )
+
+    def _read_xbox360(
+        self,
+        button_number: Optional[int],
+        button_state: Optional[bool],
+        axis_number: Optional[int],
+        axis_val: Optional[float],
+    ) -> ShanWanGamepadInput:
+        if axis_number is not None and axis_val is not None:
+            if axis_number == 0:
+                self.gamepad_input.analog_stick_left.x = axis_val
+            elif axis_number == 1:
+                self.gamepad_input.analog_stick_left.y = -axis_val
+            elif axis_number == 3:
+                self.gamepad_input.analog_stick_right.x = axis_val
+            elif axis_number == 4:
+                self.gamepad_input.analog_stick_right.y = -axis_val
+        if button_number is not None and button_state is not None:
+            if button_number == 0:
+                self.gamepad_input.button_a = button_state
+            elif button_number == 1:
+                self.gamepad_input.button_b = button_state
+            elif button_number == 2:
+                self.gamepad_input.button_x = button_state
+            elif button_number == 3:
+                self.gamepad_input.button_y = button_state
+            elif button_number == 4:
+                self.gamepad_input.button_l1 = button_state
+            elif button_number == 5:
+                self.gamepad_input.button_r1 = button_state
+            elif button_number == 6:
+                self.gamepad_input.button_select = button_state
+            elif button_number == 7:
+                self.gamepad_input.button_start = button_state
+            elif button_number == 8:
+                self.gamepad_input.button_home = button_state
+        return self.gamepad_input
 
     def read_data(self) -> ShanWanGamepadInput:
         _, button_number, button_state, _, axis_number, axis_val = super(ShanWanGamepad, self).poll()
+
+        if getattr(self, "_layout", "shanwan") == "xbox360":
+            return self._read_xbox360(button_number, button_state, axis_number, axis_val)
 
         if axis_number == 0:
             self.gamepad_input.analog_stick_left.x = axis_val
