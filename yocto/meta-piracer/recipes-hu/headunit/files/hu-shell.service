@@ -12,6 +12,7 @@ Environment=QT_QPA_PLATFORM=eglfs
 Environment=XDG_RUNTIME_DIR=/run/user/0
 Environment=QT_FONT_DPI=96
 Environment=VSOMEIP_CONFIGURATION=/usr/bin/config/vsomeip_headunit.json
+Environment=HU_REAR_CAMERA_DEVICE=/dev/video0
 ExecStart=/usr/bin/hu_shell
 Restart=always
 RestartSec=3

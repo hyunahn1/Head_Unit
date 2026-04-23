@@ -74,6 +74,8 @@ sstate-cache/
 downloads/
 *.bb~
 *.bbappend~
+oe-logs
+oe-workdir
 
 # ============================================================
 # Logs / temp

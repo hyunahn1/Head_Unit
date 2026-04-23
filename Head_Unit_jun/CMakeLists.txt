@@ -33,12 +33,18 @@ else()
 endif()
 
 # ── 옵셔널 컴포넌트 ────────────────────────────────────────────────────
-find_package(Qt5 OPTIONAL_COMPONENTS Multimedia)
+find_package(Qt5 OPTIONAL_COMPONENTS Multimedia MultimediaWidgets)
 if(Qt5Multimedia_FOUND)
     message(STATUS "Qt Multimedia found - real audio enabled")
     add_compile_definitions(HU_MULTIMEDIA_AVAILABLE)
 else()
     message(STATUS "Qt Multimedia NOT found - stub audio")
+endif()
+
+if(Qt5MultimediaWidgets_FOUND)
+    message(STATUS "Qt MultimediaWidgets found - camera viewfinder UI available")
+else()
+    message(STATUS "Qt MultimediaWidgets NOT found - reverse camera keeps placeholder")
 endif()
 
 find_package(Qt5 OPTIONAL_COMPONENTS WebEngineWidgets)
