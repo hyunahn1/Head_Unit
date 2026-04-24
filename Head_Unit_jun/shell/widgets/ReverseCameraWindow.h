@@ -1,16 +1,8 @@
-/**
- * @file ReverseCameraWindow.h
- * @brief Overlay window showing placeholder reverse camera view
- *        Opens when gear is R, closes automatically when gear changes
- * @author PiRacer Head Unit
- * @date 2026-02-23
- */
-
 #ifndef REVERSECAMERAWINDOW_H
 #define REVERSECAMERAWINDOW_H
 
 #include <QWidget>
-#include <QLabel>
+#include <QTimer>
 
 class ReverseCameraWindow : public QWidget
 {
@@ -19,12 +11,15 @@ class ReverseCameraWindow : public QWidget
 public:
     explicit ReverseCameraWindow(QWidget *parent = nullptr);
 
+    // 🔥 Call this from your CAN module
+    void setDistance(int distance);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    void buildPlaceholderPixmap();
-    QPixmap m_placeholder;
+    int m_distance;     // Distance in cm
+    QTimer *m_timer;    // UI refresh timer
 };
 
 #endif // REVERSECAMERAWINDOW_H
