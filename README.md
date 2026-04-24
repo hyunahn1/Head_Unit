@@ -1,296 +1,453 @@
-# PiRacer Park Distance Control
+# PiRacer Head Unit, Instrument Cluster, and Yocto Platform
 
-Park Distance Control (PDC) integration for the PiRacer head unit.  
-The system augments the reverse camera view with distance-aware visual guidance using ultrasonic sensor data received from the vehicle CAN bus.
+An embedded automotive HMI platform for the PiRacer vehicle, combining a Qt-based Head Unit, a real-time Instrument Cluster, vehicle communication through CAN and vSomeIP, and a reproducible Yocto Linux image for Raspberry Pi 4.
 
-This project was built as a complete feature slice: sensor input, distance validation, warning-level classification, reverse-camera overlay rendering, audible warning control, Yocto deployment, and on-target verification on Raspberry Pi.
+The project is organized as a complete in-vehicle software stack rather than a single application. It covers user-facing HMI design, multi-process Qt architecture, inter-process communication, CAN-based vehicle data handling, camera integration, deployment automation, and target validation on embedded Linux.
 
-## Project Summary
+## Executive Summary
 
-When the driver selects reverse gear, the head unit opens the rear camera view. The PDC feature then reads rear obstacle distance data from CAN, computes the current warning state, and renders parking guide lines directly over the camera feed.
+This system implements a dual-display cockpit experience for the PiRacer platform:
 
-The resulting behavior is similar to production parking assist systems:
+| Area | Description |
+|------|-------------|
+| Head Unit | Driver-facing infotainment and control surface with media, navigation, ambient lighting, gear control, settings, reverse camera, and PDC overlay. |
+| Instrument Cluster | Real-time dashboard for speed, RPM, battery, direction, drive time, and session telemetry. |
+| Vehicle Communication | CAN for low-level vehicle/sensor data and vSomeIP for application-level Head Unit to Cluster synchronization. |
+| Embedded Linux | Custom Yocto image targeting Raspberry Pi 4, with Qt, Wayland, GStreamer, vSomeIP, CAN utilities, and project services integrated. |
+| Deployment | Docker-based Yocto build environment, BitBake recipes, image generation, SD flashing, and fast binary replacement for iterative testing. |
 
-- green guidance for safe/near range
-- yellow guidance for caution range
-- red guidance for critical range
-- sensor-sector feedback for obstacle direction
-- stale-data suppression to avoid misleading warnings
-- audible feedback based on proximity level
+## System Goals
 
-## System Context
+- Build a coherent automotive-style cockpit using separate Head Unit and Instrument Cluster applications.
+- Run on Raspberry Pi 4 with reproducible Yocto images rather than an ad-hoc desktop Linux setup.
+- Keep vehicle-facing logic behind interfaces so mock implementations and hardware implementations can be swapped cleanly.
+- Support multi-process UI composition for better isolation between infotainment modules.
+- Synchronize vehicle state across displays using a defined IPC layer.
+- Validate the system on real target hardware, including CAN traffic and deployed binaries.
 
-The PDC feature is integrated into the existing PiRacer head unit software stack.
-
-```text
-PiRacer vehicle
-  |
-  |  Ultrasonic / speed data
-  v
-CAN bus
-  |
-  v
-Raspberry Pi 4
-  |
-  +-- Head Unit Shell (Qt)
-  |     |
-  |     +-- ReverseCameraWindow
-  |     +-- PdcController
-  |     +-- SocketCanPdcProvider
-  |     +-- PdcOverlayPainter
-  |     +-- PdcBeepController
-  |
-  +-- Yocto Linux image
-```
-
-The feature is activated by the existing gear flow. When `GearState::R` is selected, the reverse camera window is shown and the PDC overlay becomes active.
-
-## Key Features
-
-| Feature | Description |
-|---------|-------------|
-| Reverse-camera overlay | Draws PDC guide lines on top of the rear camera feed or fallback placeholder. |
-| CAN-based distance input | Reads live CAN frames from `can0` through SocketCAN. |
-| Mock sensor support | Provides a development path for UI and logic testing without hardware. |
-| Warning-level classification | Converts nearest obstacle distance into Far, Near, Caution, or Critical. |
-| Stale-data handling | Suppresses warnings when CAN data stops updating. |
-| Sensor-sector visualization | Shows which rear area is closest to an obstacle. |
-| Audible warning controller | Maps proximity level to beep cadence. |
-| Yocto deployment | Built into the Raspberry Pi head unit image and deployed to `/usr/bin/hu_shell`. |
-
-## Architecture
-
-The PDC implementation is divided into five main responsibilities.
+## High-Level Architecture
 
 ```text
-CAN / Mock Input
-      |
-      v
-IPdcSensorProvider
-      |
-      v
-PdcController
-      |
-      +--------------------------+
-      |                          |
-      v                          v
-ReverseCameraWindow        PdcBeepController
-      |
-      v
-PdcOverlayPainter
+                            PiRacer Vehicle
+                                  |
+                     CAN: speed / sensors / vehicle data
+                                  |
+                                  v
+┌──────────────────────────────── Raspberry Pi 4 ───────────────────────────────┐
+│                                                                                │
+│  ┌────────────────────────────── Yocto Linux ────────────────────────────────┐ │
+│  │ Qt5 / QtWayland / EGLFS / GStreamer / vSomeIP / SocketCAN / can-utils    │ │
+│  └───────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                │
+│  ┌──────────────────────────── Head Unit Shell ─────────────────────────────┐  │
+│  │ hu_shell                                                                 │  │
+│  │ - QtWayland compositor                                                    │  │
+│  │ - Tab bar, status bar, shell lifecycle                                    │  │
+│  │ - Reverse camera and PDC overlay                                          │  │
+│  │ - Launches feature modules                                                │  │
+│  └───────────────┬──────────────────────────────────────────────────────────┘  │
+│                  │ Wayland surfaces + local module IPC                         │
+│                  v                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ Head Unit Modules                                                        │  │
+│  │ media | youtube | call | navigation | ambient | settings                 │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                │
+│                         vSomeIP service/event channel                           │
+│                                                                                │
+│  ┌────────────────────────── Instrument Cluster ────────────────────────────┐  │
+│  │ PiRacerDashboard                                                         │  │
+│  │ - Speedometer, RPM, battery, drive time                                  │  │
+│  │ - CAN speed input                                                        │  │
+│  │ - Gear/direction synchronization                                         │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. Sensor Provider Layer
+## Repository Layout
 
-The sensor provider abstracts the source of distance data.
+```text
+Head_Unit/
+├── Head_Unit_jun/                     # Main Qt source tree
+│   ├── shell/                         # hu_shell compositor and system shell
+│   ├── modules/                       # Independent Head Unit feature modules
+│   ├── core/                          # Shared interfaces, IPC, models, protocol
+│   ├── instrument_cluster/            # Instrument Cluster Qt dashboard
+│   ├── config/                        # vSomeIP and display configuration
+│   └── docs/                          # Architecture, verification, PDC docs
+│
+├── yocto/                             # Embedded Linux build system
+│   ├── Dockerfile                     # Ubuntu 22.04 Yocto build container
+│   ├── docker-build.sh                # Build automation wrapper
+│   ├── flash.sh                       # SD card flashing helper
+│   ├── poky/                          # Yocto Poky base
+│   ├── meta-openembedded/             # OE layer collection
+│   ├── meta-raspberrypi/              # Raspberry Pi BSP layer
+│   ├── meta-qt5/                      # Qt5 layer
+│   └── meta-piracer/                  # Custom project layer
+│       ├── recipes-hu/headunit/       # Head Unit recipe and startup files
+│       ├── recipes-cluster/           # Instrument Cluster recipe
+│       ├── recipes-core/images/       # Project image recipes
+│       ├── recipes-connectivity/      # vSomeIP recipe
+│       └── recipes-python/            # PiRacer Python support
+│
+├── pdc.md                             # Original PDC project brief
+├── YOCTO_BUILD_GUIDE.md               # Detailed build/deployment guide
+├── SSH_GUIDE.md                       # Target discovery and SSH notes
+└── README.md
+```
+
+## Head Unit
+
+The Head Unit is the primary driver-facing HMI. It is built around a shell process, `hu_shell`, that owns the display, manages shared vehicle state, launches feature modules, and composes module windows through QtWayland.
+
+### Head Unit Responsibilities
+
+| Responsibility | Implementation |
+|----------------|----------------|
+| Shell lifecycle | `ShellWindow` creates the root UI, compositor, modules, status bar, splash screen, and camera window. |
+| Module isolation | Each major feature runs as its own process and connects back to the shell. |
+| Display composition | `HUCompositor` receives Wayland surfaces and routes them into the active content area. |
+| Vehicle state | `GearStateManager`, `IVehicleDataProvider`, `VSomeIPClient`, and module bridge messages synchronize speed, gear, battery, and IPC state. |
+| Reverse camera | `ReverseCameraWindow` displays a GStreamer camera feed or placeholder fallback. |
+| Parking assistance | PDC reads CAN distance data and renders warning overlays on the reverse camera. |
+
+### Head Unit Modules
+
+| Module | Binary | Purpose |
+|--------|--------|---------|
+| Media | `hu_module_media` | Local audio playback, playlist handling, media UI. |
+| YouTube | `hu_module_youtube` | Web-based video/content surface where supported. |
+| Call | `hu_module_call` | Phone/call UI placeholder and interaction surface. |
+| Navigation | `hu_module_navigation` | Navigation and map-oriented UI. |
+| Ambient | `hu_module_ambient` | Interior lighting presets, color control, brightness control. |
+| Settings | `hu_module_settings` | Speed unit, build information, IPC status, vehicle status. |
+
+### Shell And Module Communication
+
+The Head Unit uses two communication mechanisms:
+
+| Channel | Purpose |
+|---------|---------|
+| Wayland | Carries module-rendered surfaces into the compositor shell. |
+| Local Unix socket IPC | Carries structured messages such as gear updates, speed updates, ambient color commands, and status updates. |
+
+This separation allows UI rendering and control messages to remain independent. A module can crash or reconnect without requiring the entire shell to be redesigned around a monolithic widget tree.
+
+## Instrument Cluster
+
+The Instrument Cluster is a separate Qt application focused on real-time driving information. It targets a dashboard-style display and presents vehicle telemetry in a compact, glanceable form.
+
+### Cluster Responsibilities
+
+| Responsibility | Implementation |
+|----------------|----------------|
+| Speed display | Central analog/digital speedometer. |
+| RPM display | Wheel RPM visualization. |
+| Battery display | Voltage and percentage with color-coded status. |
+| Session data | Drive time and maximum speed record. |
+| Vehicle direction | Forward/reverse direction display and synchronization. |
+| CAN input | SocketCAN-based speed data path in the cluster source tree. |
+| Head Unit sync | vSomeIP gear/speed communication path. |
+
+### Cluster Data Flow
+
+```text
+Speed sensor / Arduino / CAN
+          |
+          v
+Instrument Cluster data reader
+          |
+          v
+Dashboard widgets
+          |
+          +---- Speedometer
+          +---- RPM gauge
+          +---- Battery widget
+          +---- Direction indicator
+```
+
+The cluster is intentionally separate from the Head Unit. This reflects the way real vehicle cockpits divide responsibilities between infotainment surfaces and safety/driver-information displays.
+
+## Vehicle Communication
+
+### CAN
+
+CAN is used for vehicle and sensor data entering the Raspberry Pi. Current use cases include speed data and PDC distance data.
+
+Observed CAN behavior from the target:
+
+```text
+can0  123   [8]  00 49 00 00 00 00 00 00
+can0  123   [8]  00 48 00 00 00 00 00 00
+```
+
+The PDC implementation currently supports:
+
+| CAN ID | Meaning |
+|--------|---------|
+| `0x123` | Observed live frame. Byte 1 is treated as a rear distance candidate. |
+| `0x350` | Proposed four-sensor PDC frame using four little-endian centimeter values. |
+
+CAN access is implemented through Linux SocketCAN, which allows the application to use standard Linux networking primitives for CAN sockets and event-driven reads.
+
+### vSomeIP
+
+vSomeIP is used for application-level communication between Head Unit and Instrument Cluster.
+
+| Signal | Direction | Purpose |
+|--------|-----------|---------|
+| Speed | Cluster to Head Unit | Display and state synchronization. |
+| Gear | Bidirectional | Gear state propagation from touch/gamepad/cluster sources. |
+| Battery | Cluster to Head Unit | Vehicle status display. |
+
+The project uses a service-oriented communication model instead of directly coupling UI classes across processes. That keeps the Head Unit and Cluster independently deployable and closer to automotive middleware patterns.
+
+## Park Distance Control Extension
+
+PDC is integrated as a feature extension of the reverse camera flow.
+
+```text
+GearState::R
+    |
+    v
+ReverseCameraWindow opens
+    |
+    v
+SocketCanPdcProvider reads can0
+    |
+    v
+PdcController computes warning state
+    |
+    +--> PdcOverlayPainter renders guide lines
+    |
+    +--> PdcBeepController updates warning cadence
+```
+
+PDC components:
 
 | Component | Role |
 |-----------|------|
-| `IPdcSensorProvider` | Common interface for all PDC distance sources. |
-| `SocketCanPdcProvider` | Reads PDC data from Linux SocketCAN on `can0`. |
-| `MockPdcSensorProvider` | Generates synthetic sensor values for local UI testing. |
+| `IPdcSensorProvider` | Abstract interface for distance sources. |
+| `SocketCanPdcProvider` | Reads PDC frames from `can0`. |
+| `MockPdcSensorProvider` | Generates local test data without sensors. |
+| `PdcController` | Validates readings, handles stale data, computes warning level. |
+| `PdcOverlayPainter` | Draws green/yellow/red overlay and sensor bars. |
+| `PdcBeepController` | Converts warning level into audible feedback cadence. |
 
-This separation keeps the rest of the PDC system independent from the transport layer. The UI and controller do not need to know whether data came from live CAN traffic or a mock provider.
+Warning model:
 
-### 2. PDC State Model
-
-The shared PDC state lives in `PdcTypes`.
-
-Core model types:
-
-| Type | Description |
-|------|-------------|
-| `PdcSensorReading` | One sensor reading: name, distance in centimeters, validity, timestamp. |
-| `PdcState` | Aggregated PDC state: rear sensors, nearest distance, warning level, active/stale flags. |
-| `PdcWarningLevel` | Warning enum: Off, Far, Near, Caution, Critical. |
-
-The model is intentionally small and explicit. It carries only the data needed by the controller, overlay painter, and beep controller.
-
-### 3. PDC Controller
-
-`PdcController` receives raw sensor readings and turns them into a stable UI/audio state.
-
-Responsibilities:
-
-- accept readings from an `IPdcSensorProvider`
-- reject invalid distance values
-- detect stale data using a timeout
-- compute the nearest valid obstacle
-- map nearest distance to a warning level
-- suppress warnings when PDC is inactive
-- suppress warnings when vehicle speed exceeds the configured active range
-- emit `PdcState` updates for the camera overlay and beep controller
-
-Default warning thresholds:
-
-| Warning Level | Distance |
-|---------------|----------|
+| Level | Distance |
+|-------|----------|
 | Far | `>= 120 cm` |
 | Near | `60-119 cm` |
 | Caution | `30-59 cm` |
 | Critical | `< 30 cm` |
 | Off | inactive, stale, invalid, or speed-gated |
 
-### 4. Visual Overlay
-
-`PdcOverlayPainter` renders the visual PDC information on top of `ReverseCameraWindow`.
-
-Rendered elements:
-
-- green guide lines for far/near range
-- yellow guide line for caution range
-- red guide line for critical range
-- four rear sensor sector bars
-- nearest-distance pill
-- stale/fault indication when sensor data is unavailable
-
-The overlay is drawn after the camera frame, so it works with both the real GStreamer camera feed and the existing placeholder image.
-
-### 5. Audible Warning
-
-`PdcBeepController` maps warning level to beep cadence.
-
-| Warning Level | Beep Behavior |
-|---------------|---------------|
-| Off | no beep |
-| Far | no beep |
-| Near | slow beep |
-| Caution | medium beep |
-| Critical | fast beep |
-
-The controller stops immediately when PDC becomes inactive or sensor data becomes stale.
-
-## Data Flow
-
-### Runtime Flow
+Detailed PDC documentation is available in:
 
 ```text
-1. Gear changes to R
-2. ShellWindow opens ReverseCameraWindow
-3. PdcController becomes active
-4. SocketCanPdcProvider reads CAN frames from can0
-5. PdcController validates and classifies sensor data
-6. ReverseCameraWindow receives PdcState
-7. PdcOverlayPainter renders guide lines and sensor sectors
-8. PdcBeepController updates audible feedback
-9. Gear leaves R
-10. Camera closes and PDC warnings stop
+Head_Unit_jun/docs/pdc/
 ```
 
-### CAN Input
+## Yocto Platform
 
-The live PiRacer target was observed receiving CAN frames on `can0`.
+The project uses Yocto to build a controlled Linux image for Raspberry Pi 4. This is a central part of the system, not just a packaging detail.
 
-Observed sample:
+### Why Yocto
+
+Yocto provides:
+
+| Capability | Value for this project |
+|------------|------------------------|
+| Reproducible root filesystem | The same image can be rebuilt with the same layers, recipes, and configuration. |
+| Target-specific dependency control | Qt, vSomeIP, GStreamer, CAN tools, and project binaries are built into the image. |
+| Service integration | Head Unit and Cluster startup scripts/services are installed as part of the image. |
+| Board support | Raspberry Pi 4 kernel, boot files, device support, and hardware configuration are managed through layers. |
+| Deployment artifact | Produces `.wic.bz2` images that can be flashed directly to SD card. |
+
+### Yocto Layers
+
+| Layer | Purpose |
+|-------|---------|
+| `poky` | Yocto reference distribution and OpenEmbedded Core. |
+| `meta-openembedded` | Additional common recipes and libraries. |
+| `meta-raspberrypi` | Raspberry Pi BSP support. |
+| `meta-qt5` | Qt5 recipes used by the HMI applications. |
+| `meta-piracer` | Project-specific image recipes, application recipes, services, and configuration. |
+
+### Custom Recipes
+
+| Recipe | Purpose |
+|--------|---------|
+| `headunit_git.bb` | Builds and installs `hu_shell` and Head Unit modules. |
+| `instrument-cluster_git.bb` | Builds and installs the Instrument Cluster dashboard. |
+| `piracer-hu-image.bb` | Creates the Head Unit target image. |
+| `piracer-cluster-image.bb` | Creates the Instrument Cluster target image. |
+| `vsomeip3_3.4.10.bb` | Provides vSomeIP middleware. |
+| `python3-piracer_0.1.1.bb` | Provides PiRacer Python support. |
+
+### Build Environment
+
+The Yocto build runs inside a Docker container based on Ubuntu 22.04. This avoids host distribution issues and keeps the build environment stable.
 
 ```text
-(000.000000)  can0  123   [8]  00 49 00 00 00 00 00 00
-(000.200799)  can0  123   [8]  00 48 00 00 00 00 00 00
-(003.403546)  can0  123   [8]  00 4B 00 00 00 00 00 00
+Host machine
+    |
+    v
+Docker build container
+    |
+    v
+BitBake / Yocto build
+    |
+    v
+Raspberry Pi 4 image
 ```
 
-Supported decode paths:
+### Build Commands
 
-| CAN ID | Payload | Meaning |
-|--------|---------|---------|
-| `0x123` | Byte 1 | Observed live frame. Byte 1 is treated as a rear distance candidate and copied to all rear sectors. |
-| `0x350` | Four little-endian `uint16` values | Proposed four-sensor rear distance frame: rear-left, rear-mid-left, rear-mid-right, rear-right. |
-
-The `0x123` mapping is intentionally isolated inside `SocketCanPdcProvider`, so it can be replaced once the final ultrasonic CAN contract is confirmed.
-
-## Safety And Fault Handling
-
-The PDC system favors safe suppression over misleading output.
-
-| Fault / Condition | Handling |
-|-------------------|----------|
-| Gear is not reverse | PDC is inactive. |
-| No CAN frame within stale timeout | Warning level becomes Off. |
-| Sensor value below minimum range | Reading is invalid. |
-| Sensor value above maximum range | Reading is invalid. |
-| No valid sensors | No nearest distance is shown. |
-| `can0` unavailable | Camera still opens; PDC fault is logged. |
-| Camera unavailable | Placeholder remains visible; overlay can still render for debugging. |
-
-## Repository Map
-
-Important project files:
-
-```text
-Head_Unit_jun/
-├── core/
-│   ├── interfaces/
-│   │   └── IPdcSensorProvider.h
-│   ├── ipc/
-│   │   ├── MockPdcSensorProvider.h/.cpp
-│   │   └── SocketCanPdcProvider.h/.cpp
-│   └── models/
-│       └── PdcTypes.h
-├── shell/
-│   ├── PdcController.h/.cpp
-│   ├── PdcBeepController.h/.cpp
-│   ├── ShellWindow.h/.cpp
-│   └── widgets/
-│       ├── ReverseCameraWindow.h/.cpp
-│       └── PdcOverlayPainter.h/.cpp
-└── docs/
-    └── pdc/
-        ├── ARCHITECTURE.md
-        ├── CAN_SIGNAL_CONTRACT.md
-        ├── IMPLEMENTATION_PLAN.md
-        ├── UI_OVERLAY_SPEC.md
-        └── VERIFICATION_PLAN.md
-```
-
-## Build
-
-The project is built through the Yocto Docker wrapper.
-
-Build the full head unit image:
+Build the full Head Unit image:
 
 ```bash
 cd yocto
-SKIP_DOCKER_BUILD=1 ./docker-build.sh
+SKIP_DOCKER_BUILD=1 ./docker-build.sh piracer-hu-image
 ```
 
-Build only the head unit package:
+Build only the Head Unit package:
 
 ```bash
 cd yocto
 SKIP_DOCKER_BUILD=1 ./docker-build.sh headunit
 ```
 
-The head unit recipe uses `externalsrc`, so it builds from the local `Head_Unit_jun` source tree.
-
-## Deployment
-
-After building, the new `hu_shell` binary can be deployed directly to the Raspberry Pi for fast validation without reflashing the SD card.
+Build the Instrument Cluster image:
 
 ```bash
-scp yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/image/usr/bin/hu_shell \
-    root@192.168.86.35:/tmp/hu_shell.pdc
-
-ssh root@192.168.86.35 \
-    "cp /usr/bin/hu_shell /usr/bin/hu_shell.bak && \
-     cp /tmp/hu_shell.pdc /usr/bin/hu_shell && \
-     chmod 0755 /usr/bin/hu_shell && \
-     /etc/init.d/hu-shell restart"
+cd yocto
+SKIP_DOCKER_BUILD=1 ./docker-build.sh piracer-cluster-image
 ```
 
-The complete image artifact is also generated under:
+The build output is generated under:
 
 ```text
 yocto/build-rpi/tmp/deploy/images/raspberrypi4-64/
 ```
 
-## Target Verification
+Example artifact:
 
-PDC deployment was verified on the Raspberry Pi target.
+```text
+piracer-hu-image-raspberrypi4-64.rootfs.wic.bz2
+```
 
-### CAN Interface
+## Deployment
+
+### Full Image Deployment
+
+The full image can be flashed to an SD card:
+
+```bash
+cd yocto
+./flash.sh /dev/sdX
+```
+
+The exact device should be verified with `lsblk` before flashing.
+
+### Fast Application Deployment
+
+During development, rebuilding and reflashing the entire image is unnecessary for most application changes. A faster workflow is to build the package, copy the updated binary to the Raspberry Pi, and restart the service.
+
+Example for `hu_shell`:
+
+```bash
+scp yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/image/usr/bin/hu_shell \
+    root@192.168.86.35:/tmp/hu_shell.new
+
+ssh root@192.168.86.35 \
+    "cp /usr/bin/hu_shell /usr/bin/hu_shell.bak && \
+     cp /tmp/hu_shell.new /usr/bin/hu_shell && \
+     chmod 0755 /usr/bin/hu_shell && \
+     /etc/init.d/hu-shell restart"
+```
+
+## Runtime On Target
+
+On the Raspberry Pi target, the Head Unit runs as:
+
+```text
+/usr/bin/hu_shell
+```
+
+The shell launches module binaries:
+
+```text
+/usr/bin/hu_module_media
+/usr/bin/hu_module_youtube
+/usr/bin/hu_module_call
+/usr/bin/hu_module_navigation
+/usr/bin/hu_module_ambient
+/usr/bin/hu_module_settings
+```
+
+Startup configuration is installed through the Yocto recipe:
+
+```text
+/etc/init.d/hu-shell
+/usr/bin/config/vsomeip_headunit.json
+/usr/bin/config/kms_headunit.json
+```
+
+Relevant runtime environment:
+
+| Variable | Purpose |
+|----------|---------|
+| `QT_QPA_PLATFORM=eglfs` | Runs the shell directly on the display without desktop window manager. |
+| `QT_QPA_EGLFS_KMS_CONFIG` | Selects KMS/display configuration. |
+| `XDG_RUNTIME_DIR=/run/user/0` | Runtime directory for Wayland socket and Qt platform data. |
+| `VSOMEIP_CONFIGURATION` | Points to Head Unit vSomeIP configuration. |
+| `HU_REAR_CAMERA_DEVICE` | Camera device selection for reverse camera. |
+
+## Verification
+
+### Build Verification
+
+Successful Yocto build summary:
+
+```text
+Tasks Summary: Attempted 7832 tasks ... all succeeded.
+```
+
+Image output:
+
+```text
+piracer-hu-image-raspberrypi4-64.rootfs.wic.bz2
+piracer-hu-image-raspberrypi4-64.rootfs.wic.bmap
+```
+
+### Target Process Verification
+
+```bash
+ssh root@192.168.86.35 "ps | grep -E 'hu_shell|hu_module|PiRacerDashboard'"
+```
+
+Expected Head Unit processes:
+
+```text
+/usr/bin/hu_shell
+/usr/bin/hu_module_media
+/usr/bin/hu_module_youtube
+/usr/bin/hu_module_call
+/usr/bin/hu_module_navigation
+/usr/bin/hu_module_ambient
+/usr/bin/hu_module_settings
+```
+
+### CAN Verification
 
 ```bash
 ssh root@192.168.86.35 "ip link show can0"
+ssh root@192.168.86.35 "candump -tz -n 80 -T 3000 can0"
 ```
 
 Expected:
@@ -299,78 +456,67 @@ Expected:
 can0: <NOARP,UP,LOWER_UP,ECHO>
 ```
 
-### CAN Traffic
+### PDC Runtime Verification
 
 ```bash
-ssh root@192.168.86.35 "candump -tz -n 80 -T 3000 can0"
+ssh root@192.168.86.35 "grep -E 'PDC|SocketCAN|can0' /tmp/hu_shell.log"
 ```
 
 Observed:
-
-```text
-can0  123   [8]  00 49 00 00 00 00 00 00
-```
-
-### Binary Contains PDC
-
-```bash
-ssh root@192.168.86.35 "strings /usr/bin/hu_shell | grep PDC"
-```
-
-Expected:
-
-```text
-[PDC] Using SocketCAN sensor provider on can0
-[PDC] SocketCAN provider listening on
-```
-
-### Runtime Log
-
-The deployed binary confirmed SocketCAN startup:
 
 ```text
 [PDC] Using SocketCAN sensor provider on can0
 [PDC] SocketCAN provider listening on "can0"
 ```
 
-## Validation Checklist
+## Engineering Highlights
 
-| Test | Expected Result |
-|------|-----------------|
-| Shift to reverse | Reverse camera window opens. |
-| PDC provider starts | Log shows SocketCAN provider on `can0`. |
-| CAN frame received | PDC state updates from `0x123` or `0x350`. |
-| Safe distance | Green guide lines are visible. |
-| Medium distance | Yellow guide line becomes emphasized. |
-| Close obstacle | Red guide line becomes emphasized. |
-| CAN data stops | PDC becomes stale and warning is suppressed. |
-| Shift out of reverse | Camera closes and beep stops. |
+### Multi-Process HMI
 
-## Documentation
+The Head Unit shell and feature modules are separated into multiple processes. This mirrors a more resilient cockpit architecture than a single monolithic UI process. Rendering surfaces are integrated through QtWayland, while control messages use local IPC.
 
-Detailed PDC documentation is available in:
+### Hardware Abstraction
 
-```text
-Head_Unit_jun/docs/pdc/
-```
+Vehicle data, PDC sensor data, and LED control are accessed through interfaces. This keeps UI code independent from mock, CAN, vSomeIP, or hardware-specific implementations.
+
+### Embedded Build Reproducibility
+
+Application code is not manually copied into a Raspberry Pi filesystem as the primary deployment path. It is represented through Yocto recipes and image definitions, which makes the system reproducible and reviewable.
+
+### Target-Oriented Validation
+
+The project validates beyond desktop compilation. It includes Raspberry Pi deployment, process checks, CAN interface checks, binary verification through `strings`, and live runtime log inspection.
+
+## Current Status
+
+| Area | Status |
+|------|--------|
+| Head Unit shell | Implemented and running on target. |
+| Head Unit modules | Implemented as separate processes. |
+| Instrument Cluster | Implemented as separate dashboard application. |
+| Yocto image | Builds successfully for Raspberry Pi 4. |
+| vSomeIP integration | Implemented; routing availability depends on runtime service configuration. |
+| CAN interface | `can0` verified on target. |
+| Reverse camera | Integrated with GStreamer pipeline and placeholder fallback. |
+| PDC overlay | Implemented, built into Yocto image, deployed to target. |
+
+## Documentation Index
 
 | Document | Purpose |
 |----------|---------|
-| `ARCHITECTURE.md` | System architecture and component responsibilities |
-| `CAN_SIGNAL_CONTRACT.md` | CAN IDs, payload assumptions, and discovery procedure |
-| `UI_OVERLAY_SPEC.md` | Overlay colors, layout, and warning visualization |
-| `IMPLEMENTATION_PLAN.md` | Implementation phases and file-level plan |
-| `VERIFICATION_PLAN.md` | Unit, integration, UI, and hardware validation plan |
+| `YOCTO_BUILD_GUIDE.md` | Full Yocto build and deployment guide. |
+| `SSH_GUIDE.md` | Raspberry Pi discovery and SSH connection notes. |
+| `Head_Unit_jun/docs/ARCHITECTURE.md` | Head Unit architecture summary. |
+| `Head_Unit_jun/docs/VERIFICATION.md` | Head Unit verification plan. |
+| `Head_Unit_jun/instrument_cluster/docs/SPECIFICATION.md` | Instrument Cluster specification. |
+| `Head_Unit_jun/instrument_cluster/docs/VERIFICATION_PLAN.md` | Instrument Cluster verification plan. |
+| `Head_Unit_jun/docs/pdc/` | PDC architecture, CAN contract, UI spec, implementation plan, and verification plan. |
 
 ## Future Work
 
-- Confirm the final ultrasonic CAN payload format with controlled obstacle-distance tests.
-- Calibrate guide-line geometry to the actual rear camera field of view.
-- Add per-sensor fault indicators to distinguish invalid, disconnected, and out-of-range sensors.
-- Replace the initial `QApplication::beep()` implementation with target-specific audio or buzzer output.
-- Add a standalone simulator repository for demos and threshold tuning without hardware.
-
-## Status
-
-Implemented and deployed to the Raspberry Pi head unit target.  
-The current version supports live SocketCAN input, reverse-camera overlay rendering, stale-data handling, and warning-level classification.
+- Confirm final ultrasonic CAN payload contract with controlled obstacle-distance measurements.
+- Improve vSomeIP startup orchestration so routing manager availability is deterministic.
+- Replace placeholder call/YouTube/navigation behavior with production-ready services where required.
+- Add automated integration tests for module IPC and vSomeIP message paths.
+- Add screenshots and recorded demos for Head Unit, Cluster, reverse camera, and PDC operation.
+- Consolidate fast deployment scripts for safe binary replacement on the Raspberry Pi.
