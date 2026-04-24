@@ -9,12 +9,18 @@ endif()
 add_library(hu_core STATIC
     interfaces/IVehicleDataProvider.h
     interfaces/ILedController.h
+    interfaces/IPdcSensorProvider.h
     ipc/MockVehicleDataProvider.h
     ipc/MockVehicleDataProvider.cpp
     ipc/VSomeIPClient.h
     ipc/VSomeIPClient.cpp
+    ipc/MockPdcSensorProvider.h
+    ipc/MockPdcSensorProvider.cpp
+    ipc/SocketCanPdcProvider.h
+    ipc/SocketCanPdcProvider.cpp
     ipc/MockLedController.h
     ipc/MockLedController.cpp
+    models/PdcTypes.h
     models/GearStateManager.h
     models/GearStateManager.cpp
     protocol/ShellProtocol.h

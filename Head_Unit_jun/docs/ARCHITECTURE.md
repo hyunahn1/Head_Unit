@@ -1,6 +1,6 @@
 # PiRacer Head Unit - System Architecture (요약)
 
-> [English](./ARCHITECTURE_EN.md) | **상세 설계**: [ARCHITECTURE_DESIGN.md](./ARCHITECTURE_DESIGN.md) | **검증**: [VERIFICATION.md](./VERIFICATION.md) | **비판적 평가**: [CRITICAL_EVALUATION.md](./CRITICAL_EVALUATION.md) | **최적화 사이클**: [OPTIMIZATION_CYCLE.md](./OPTIMIZATION_CYCLE.md)
+> [English](./ARCHITECTURE_EN.md) | **상세 설계**: [ARCHITECTURE_DESIGN.md](./ARCHITECTURE_DESIGN.md) | **PDC 설계**: [pdc/README.md](./pdc/README.md) | **검증**: [VERIFICATION.md](./VERIFICATION.md) | **비판적 평가**: [CRITICAL_EVALUATION.md](./CRITICAL_EVALUATION.md) | **최적화 사이클**: [OPTIMIZATION_CYCLE.md](./OPTIMIZATION_CYCLE.md)
 
 ## 1. Overview
 

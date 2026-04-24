@@ -2,15 +2,21 @@ hu_core_autogen/timestamp: \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/build-cross/core/hu_core_autogen/moc_predefs.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/CMakeLists.txt \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/interfaces/ILedController.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/interfaces/IPdcSensorProvider.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/interfaces/IVehicleDataProvider.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockLedController.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockLedController.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockPdcSensorProvider.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockPdcSensorProvider.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockVehicleDataProvider.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/MockVehicleDataProvider.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/SocketCanPdcProvider.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/SocketCanPdcProvider.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/VSomeIPClient.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/ipc/VSomeIPClient.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/models/GearStateManager.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/models/GearStateManager.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/models/PdcTypes.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/protocol/ShellClient.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/protocol/ShellClient.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/protocol/ShellProtocol.cpp \
@@ -18,12 +24,15 @@ hu_core_autogen/timestamp: \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot-native/usr/lib/aarch64-poky-linux/gcc/aarch64-poky-linux/13.4.0/include/stdarg.h \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot-native/usr/lib/aarch64-poky-linux/gcc/aarch64-poky-linux/13.4.0/include/stddef.h \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QDeadlineTimer \
+	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QMetaType \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QObject \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QRect \
+	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QSocketNotifier \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QString \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QStringList \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QTimer \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QVariantMap \
+	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QVector \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QtCore \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/QtCoreDepends \
 	/home/seame/SEA_ME/Head_Unit/yocto/build-rpi/tmp/work/cortexa72-poky-linux/headunit/git/recipe-sysroot/usr/include/QtCore/qabstractanimation.h \

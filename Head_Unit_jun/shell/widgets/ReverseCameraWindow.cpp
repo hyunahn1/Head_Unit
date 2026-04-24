@@ -1,4 +1,6 @@
 #include "ReverseCameraWindow.h"
+#include "PdcOverlayPainter.h"
+
 #include <QDebug>
 #include <QFont>
 #include <QLinearGradient>
@@ -13,8 +15,7 @@ static constexpr int kFrameIntervalMs = 33;   // ~30 fps polling
 static constexpr int kNoFrameLimit    = 90;   // ~3 s with no frame → fallback
 
 ReverseCameraWindow::ReverseCameraWindow(QWidget *parent)
-    : QWidget(parent),
-      m_distance(0)
+    : QWidget(parent)
 {
     setWindowTitle("Rear View");
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
@@ -35,6 +36,12 @@ ReverseCameraWindow::~ReverseCameraWindow()
 {
     if (m_frameTimer) m_frameTimer->stop();
     stopCameraPreview();
+}
+
+void ReverseCameraWindow::setPdcState(const PdcState &state)
+{
+    m_pdcState = state;
+    update();
 }
 
 bool ReverseCameraWindow::startCameraPreview()
@@ -139,18 +146,15 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
         p.drawImage(0, 0, m_frame);
     else
         p.drawPixmap(0, 0, m_placeholder);
+
+    PdcOverlayPainter::paint(&p, rect(), m_pdcState);
 }
 
 void ReverseCameraWindow::buildPlaceholderPixmap()
 {
-    m_distance = distance;
-}
+    m_placeholder = QPixmap(640, 400);
 
-void ReverseCameraWindow::paintEvent(QPaintEvent *event)
-{
-    Q_UNUSED(event)
-
-    QPainter p(this);
+    QPainter p(&m_placeholder);
     p.setRenderHint(QPainter::Antialiasing);
 
     QLinearGradient grad(0, 0, 640, 400);
@@ -176,7 +180,7 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
 
     font.setPointSize(10); font.setBold(false);
     p.setFont(font); p.setPen(QColor(100, 110, 120));
-    p.drawText(QRect(0, 58, 640, 24), Qt::AlignCenter, "Placeholder \u2022 No camera connected");
+    p.drawText(QRect(0, 58, 640, 24), Qt::AlignCenter, "Placeholder - No camera connected");
 
     p.setPen(Qt::NoPen); p.setBrush(QColor(40, 45, 50));
     p.drawRect(0, 340, 640, 60);
