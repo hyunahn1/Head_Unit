@@ -24,6 +24,10 @@ EXTRA_OECMAKE += " \
     -DHU_HAS_VSOMEIP=ON \
 "
 
+# The generated CMake toolchain file lives in WORKDIR, which can be recreated
+# while BitBake still has an older do_generate_toolchain_file stamp.
+do_configure[prefuncs] += "cmake_do_generate_toolchain_file"
+
 # SysVinit 설정
 INITSCRIPT_NAME = "hu-shell"
 INITSCRIPT_PARAMS = "defaults 98"
@@ -35,11 +39,11 @@ SYSTEMD_AUTO_ENABLE = "enable"
 do_install:append() {
     # init.d 스크립트 설치
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/hu-shell.init ${D}${sysconfdir}/init.d/hu-shell
+    install -m 0755 ${THISDIR}/files/hu-shell.init ${D}${sysconfdir}/init.d/hu-shell
 
     # systemd 서비스 설치
     install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/hu-shell.service ${D}${systemd_system_unitdir}/hu-shell.service
+    install -m 0644 ${THISDIR}/files/hu-shell.service ${D}${systemd_system_unitdir}/hu-shell.service
 }
 
 FILES:${PN} += " \

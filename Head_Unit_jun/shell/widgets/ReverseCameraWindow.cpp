@@ -4,8 +4,16 @@
 */
 
 #include "ReverseCameraWindow.h"
+<<<<<<< HEAD
 #include <QtCore>
 #include <QtGui>
+=======
+#include "PdcOverlayPainter.h"
+
+#include <QDebug>
+#include <QFont>
+#include <QLinearGradient>
+>>>>>>> ba084d4c6dd0091142b57ddc316ddcfc82a2794b
 #include <QPainter>
 #include <QFont>
 
@@ -21,7 +29,17 @@ ReverseCameraWindow::~ReverseCameraWindow()
 {
 }
 
+<<<<<<< HEAD
 void ReverseCameraWindow::setDistance(int cm)
+=======
+void ReverseCameraWindow::setPdcState(const PdcState &state)
+{
+    m_pdcState = state;
+    update();
+}
+
+bool ReverseCameraWindow::startCameraPreview()
+>>>>>>> ba084d4c6dd0091142b57ddc316ddcfc82a2794b
 {
     if (cm < 0) cm = 0;
     if (cm > 999) cm = 999;
@@ -55,6 +73,7 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
     else if (m_distance > 40)
         distColor = QColor(255,210,0);
     else
+<<<<<<< HEAD
         distColor = blink ? QColor(255,0,0) : QColor(255,80,80);
 
     // ============================================
@@ -79,6 +98,19 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
     p.drawText(QRect(cx-90,42,180,22),
                Qt::AlignCenter,
                QString::number(m_distance) + " cm");
+=======
+        p.drawPixmap(0, 0, m_placeholder);
+
+    PdcOverlayPainter::paint(&p, rect(), m_pdcState);
+}
+
+void ReverseCameraWindow::buildPlaceholderPixmap()
+{
+    m_placeholder = QPixmap(640, 400);
+
+    QPainter p(&m_placeholder);
+    p.setRenderHint(QPainter::Antialiasing);
+>>>>>>> ba084d4c6dd0091142b57ddc316ddcfc82a2794b
 
     // ============================================
     // OEM PARKING LINES
@@ -100,10 +132,16 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
     p.setPen(QPen(QColor(255,255,255,180),2,Qt::DashLine));
     p.drawLine(cx,160,cx,340);
 
+<<<<<<< HEAD
     // ============================================
     // 3 SIDE SENSOR DOTS EACH SIDE
     // ============================================
     int activeDots = 1;
+=======
+    font.setPointSize(10); font.setBold(false);
+    p.setFont(font); p.setPen(QColor(100, 110, 120));
+    p.drawText(QRect(0, 58, 640, 24), Qt::AlignCenter, "Placeholder - No camera connected");
+>>>>>>> ba084d4c6dd0091142b57ddc316ddcfc82a2794b
 
     if (m_distance > 100) activeDots = 1;
     else if (m_distance > 60) activeDots = 2;

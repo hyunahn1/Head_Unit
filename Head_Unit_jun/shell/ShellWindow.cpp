@@ -16,6 +16,11 @@
 #include "widgets/ReverseCameraWindow.h"
 #include "VSomeIPClient.h"
 #include "MockLedController.h"
+#include "MockPdcSensorProvider.h"
+#include "SocketCanPdcProvider.h"
+#include "IPdcSensorProvider.h"
+#include "PdcController.h"
+#include "PdcBeepController.h"
 #include "GearStateManager.h"
 #include "IVehicleDataProvider.h"
 #ifdef HU_WAYLAND_COMPOSITOR
@@ -56,6 +61,18 @@ constexpr ModuleInfo kModules[] = {
     { "ambient",    "hu_module_ambient",    "ambient"    },
     { "settings",   "hu_module_settings",  "settings"   },
 };
+
+IPdcSensorProvider *createPdcProvider()
+{
+    const QString provider = qEnvironmentVariable("HU_PDC_PROVIDER").trimmed().toLower();
+    if (provider == QStringLiteral("mock")) {
+        qInfo() << "[PDC] Using mock sensor provider";
+        return new MockPdcSensorProvider;
+    }
+
+    qInfo() << "[PDC] Using SocketCAN sensor provider on can0";
+    return new SocketCanPdcProvider(QStringLiteral("can0"));
+}
 } // namespace
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -78,6 +95,8 @@ ShellWindow::ShellWindow(QWidget *parent)
     m_vehicleData      = m_vsomeipClient;
     m_gearStateManager = new GearStateManager(this);
     m_ledController    = new MockLedController(this);
+    m_pdcController    = new PdcController(createPdcProvider(), this);
+    m_pdcBeep          = new PdcBeepController(this);
 
     setupUI();
     setupModules();
@@ -233,6 +252,8 @@ void ShellWindow::setupConnections()
     connect(m_tabBar, &TabBar::tabSelected, this, &ShellWindow::onTabChanged);
     connect(m_gearStateManager, &GearStateManager::gearChanged,
             this, &ShellWindow::onGearChanged);
+    connect(m_pdcController, &PdcController::stateChanged,
+            m_pdcBeep, &PdcBeepController::setPdcState);
 
     // ── 차량 속도 → 모든 모듈에 브로드캐스트 ──────────────────────────
     connect(m_vehicleData, &IVehicleDataProvider::speedChanged,
@@ -240,6 +261,9 @@ void ShellWindow::setupConnections()
         broadcastToAllModules([speed](ModuleBridge *b) {
             b->sendVehicleSpeed(speed);
         });
+        if (m_pdcController) {
+            m_pdcController->setVehicleSpeed(speed);
+        }
     });
 
     // ── Ambient 모듈 신호 → GlowOverlay ──────────────────────────────
@@ -348,10 +372,18 @@ void ShellWindow::onGearChanged(GearState gear, const QString &source)
 
     // 후진 기어 → 카메라 창 표시
     const bool isReverse = (static_cast<quint8>(gear) == 1); // GearState::R
+    if (m_pdcController) {
+        m_pdcController->setActive(isReverse);
+    }
     if (isReverse) {
         if (!m_reverseCamera) {
             m_reverseCamera = new ReverseCameraWindow(this);
             m_reverseCamera->setAttribute(Qt::WA_DeleteOnClose);
+            if (m_pdcController) {
+                connect(m_pdcController, &PdcController::stateChanged,
+                        m_reverseCamera, &ReverseCameraWindow::setPdcState);
+                m_reverseCamera->setPdcState(m_pdcController->state());
+            }
             connect(m_reverseCamera, &QWidget::destroyed, this, [this] {
                 m_reverseCamera = nullptr;
             });

@@ -2,6 +2,10 @@ set(SHELL_SOURCES
     main.cpp
     ShellWindow.h
     ShellWindow.cpp
+    PdcController.h
+    PdcController.cpp
+    PdcBeepController.h
+    PdcBeepController.cpp
     ModuleController.h
     ModuleController.cpp
     ModuleBridge.h
@@ -18,6 +22,8 @@ set(SHELL_SOURCES
     widgets/SplashScreen.cpp
     widgets/ReverseCameraWindow.h
     widgets/ReverseCameraWindow.cpp
+    widgets/PdcOverlayPainter.h
+    widgets/PdcOverlayPainter.cpp
     ${CMAKE_SOURCE_DIR}/resources/headunit.qrc
 )
 

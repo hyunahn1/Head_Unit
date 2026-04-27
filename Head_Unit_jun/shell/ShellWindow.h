@@ -33,6 +33,8 @@ class ModuleSurfaceWidget;
 class ClusterOutputWindow;
 class ModuleController;
 class ModuleBridge;
+class PdcController;
+class PdcBeepController;
 
 #ifdef HU_WAYLAND_COMPOSITOR
 class QWaylandSurface;
@@ -82,6 +84,8 @@ private:
     VSomeIPClient        *m_vsomeipClient    = nullptr;
     GearStateManager     *m_gearStateManager = nullptr;
     ILedController       *m_ledController    = nullptr;
+    PdcController        *m_pdcController    = nullptr;
+    PdcBeepController    *m_pdcBeep          = nullptr;
 
     // ── Wayland 컴포지터 ──────────────────────────────────────────────
 #ifdef HU_WAYLAND_COMPOSITOR

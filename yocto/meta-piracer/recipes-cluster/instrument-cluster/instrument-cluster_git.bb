@@ -20,6 +20,10 @@ EXTRA_OECMAKE += " \
     -DIC_HAS_VSOMEIP=ON \
 "
 
+# The generated CMake toolchain file lives in WORKDIR, which can be recreated
+# while BitBake still has an older do_generate_toolchain_file stamp.
+do_configure[prefuncs] += "cmake_do_generate_toolchain_file"
+
 # SysVinit: start at priority 99 (after hu-shell at 98).
 # hu-shell must start first to expose the Wayland compositor socket.
 # PiRacerDashboard is the vSomeIP routing manager, but vSomeIP clients
@@ -29,7 +33,7 @@ INITSCRIPT_PARAMS = "defaults 99"
 
 do_install:append() {
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/piracer-cluster.init ${D}${sysconfdir}/init.d/piracer-cluster
+    install -m 0755 ${THISDIR}/files/piracer-cluster.init ${D}${sysconfdir}/init.d/piracer-cluster
 }
 
 FILES:${PN} += " \
