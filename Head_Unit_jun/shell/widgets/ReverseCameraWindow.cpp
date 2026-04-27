@@ -1,184 +1,147 @@
+/* ReverseCameraWindow.cpp
+   FINAL VERSION
+   Distance + OEM Lines + 3 Side Dots + Red Alert Blink/Vibration
+*/
+
 #include "ReverseCameraWindow.h"
-#include <QDebug>
-#include <QFont>
-#include <QLinearGradient>
+#include <QtCore>
+#include <QtGui>
 #include <QPainter>
-
-#ifdef HU_CAMERA_PREVIEW_AVAILABLE
-#include <gst/gst.h>
-#include <gst/app/gstappsink.h>
-#endif
-
-static constexpr int kFrameIntervalMs = 33;   // ~30 fps polling
-static constexpr int kNoFrameLimit    = 90;   // ~3 s with no frame → fallback
+#include <QFont>
 
 ReverseCameraWindow::ReverseCameraWindow(QWidget *parent)
-    : QWidget(parent),
-      m_distance(0)
+    : QWidget(parent)
 {
-    setWindowTitle("Rear View");
-    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+    setWindowFlags(Qt::FramelessWindowHint);
     setFixedSize(640, 400);
-    setStyleSheet("background-color: #0a0a0c;");
-
-    buildPlaceholderPixmap();
-
-    if (startCameraPreview()) {
-        m_showPlaceholder = false;
-        m_frameTimer = new QTimer(this);
-        connect(m_frameTimer, &QTimer::timeout, this, &ReverseCameraWindow::onPullFrame);
-        m_frameTimer->start(kFrameIntervalMs);
-    }
+    setAttribute(Qt::WA_TranslucentBackground);
 }
 
 ReverseCameraWindow::~ReverseCameraWindow()
 {
-    if (m_frameTimer) m_frameTimer->stop();
-    stopCameraPreview();
 }
 
-bool ReverseCameraWindow::startCameraPreview()
+void ReverseCameraWindow::setDistance(int cm)
 {
-#ifdef HU_CAMERA_PREVIEW_AVAILABLE
-    if (!gst_is_initialized())
-        gst_init(nullptr, nullptr);
+    if (cm < 0) cm = 0;
+    if (cm > 999) cm = 999;
 
-    GError *err = nullptr;
-    const char *pipeStr =
-        "libcamerasrc ! "
-        "videoconvert ! "
-        "videoscale ! "
-        "video/x-raw,format=RGB,width=640,height=400,framerate=30/1 ! "
-        "appsink name=sink max-buffers=2 drop=true sync=false";
-
-    GstElement *pipeline = gst_parse_launch(pipeStr, &err);
-    if (!pipeline || err) {
-        qWarning() << "[RearCamera] pipeline parse failed:"
-                   << (err ? err->message : "unknown");
-        if (err)      g_error_free(err);
-        if (pipeline) gst_object_unref(pipeline);
-        return false;
-    }
-
-    GstElement *appsink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    if (!appsink) {
-        qWarning() << "[RearCamera] appsink element not found";
-        gst_object_unref(pipeline);
-        return false;
-    }
-
-    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
-        qWarning() << "[RearCamera] failed to set pipeline PLAYING";
-        gst_object_unref(appsink);
-        gst_object_unref(pipeline);
-        return false;
-    }
-
-    m_pipeline = pipeline;
-    m_appsink  = appsink;
-    qInfo() << "[RearCamera] libcamerasrc pipeline started";
-    return true;
-#else
-    return false;
-#endif
-}
-
-void ReverseCameraWindow::stopCameraPreview()
-{
-#ifdef HU_CAMERA_PREVIEW_AVAILABLE
-    if (m_pipeline) {
-        gst_element_set_state(reinterpret_cast<GstElement *>(m_pipeline), GST_STATE_NULL);
-        gst_object_unref(reinterpret_cast<GstElement *>(m_pipeline));
-        m_pipeline = nullptr;
-    }
-    if (m_appsink) {
-        gst_object_unref(reinterpret_cast<GstElement *>(m_appsink));
-        m_appsink = nullptr;
-    }
-#endif
-}
-
-void ReverseCameraWindow::onPullFrame()
-{
-#ifdef HU_CAMERA_PREVIEW_AVAILABLE
-    if (!m_appsink) return;
-
-    GstSample *sample = gst_app_sink_try_pull_sample(
-        GST_APP_SINK(reinterpret_cast<GstElement *>(m_appsink)), 0);
-
-    if (!sample) {
-        if (++m_noFrameCount > kNoFrameLimit) {
-            qWarning() << "[RearCamera] no frames received, falling back to placeholder";
-            m_showPlaceholder = true;
-            m_frameTimer->stop();
-            update();
-        }
-        return;
-    }
-
-    m_noFrameCount = 0;
-    GstBuffer *buf = gst_sample_get_buffer(sample);
-    if (buf) {
-        GstMapInfo map;
-        if (gst_buffer_map(buf, &map, GST_MAP_READ)) {
-            m_frame = QImage(map.data, 640, 400, 640 * 3, QImage::Format_RGB888).copy();
-            gst_buffer_unmap(buf, &map);
-            update();
-        }
-    }
-    gst_sample_unref(sample);
-#endif
+    m_distance = cm;
+    update();
 }
 
 void ReverseCameraWindow::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event)
+
+    static bool blink = false;
+    blink = !blink;
+
     QPainter p(this);
-    if (!m_showPlaceholder && !m_frame.isNull())
-        p.drawImage(0, 0, m_frame);
+    p.setRenderHint(QPainter::Antialiasing, true);
+
+    const int leftPanel = 95;
+    const int x0 = leftPanel;
+    const int w  = width() - leftPanel;
+    const int cx = x0 + w / 2;
+
+    // ============================================
+    // DISTANCE COLOR
+    // ============================================
+    QColor distColor;
+
+    if (m_distance > 80)
+        distColor = QColor(0,255,120);
+    else if (m_distance > 40)
+        distColor = QColor(255,210,0);
     else
-        p.drawPixmap(0, 0, m_placeholder);
-}
+        distColor = blink ? QColor(255,0,0) : QColor(255,80,80);
 
-void ReverseCameraWindow::buildPlaceholderPixmap()
-{
-    m_distance = distance;
-}
+    // ============================================
+    // DISTANCE BOX
+    // ============================================
+    p.setBrush(QColor(0,0,0,150));
+    p.setPen(QPen(QColor(255,255,255,70),1));
+    p.drawRoundedRect(cx-90,18,180,52,12,12);
 
-void ReverseCameraWindow::paintEvent(QPaintEvent *event)
-{
-    Q_UNUSED(event)
+    QFont font;
+    font.setPointSize(10);
+    p.setFont(font);
+    p.setPen(Qt::white);
+    p.drawText(QRect(cx-90,26,180,14),
+               Qt::AlignCenter,
+               "DISTANCE");
 
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
+    font.setPointSize(20);
+    font.setBold(true);
+    p.setFont(font);
+    p.setPen(distColor);
+    p.drawText(QRect(cx-90,42,180,22),
+               Qt::AlignCenter,
+               QString::number(m_distance) + " cm");
 
-    QLinearGradient grad(0, 0, 640, 400);
-    grad.setColorAt(0,   QColor(15, 18, 22));
-    grad.setColorAt(0.5, QColor(25, 30, 35));
-    grad.setColorAt(1,   QColor(12, 15, 18));
-    p.fillRect(m_placeholder.rect(), grad);
+    // ============================================
+    // OEM PARKING LINES
+    // ============================================
+    p.setPen(QPen(QColor(255,0,0),6));
+    p.drawLine(cx-220,305, cx+220,305);
+    p.drawLine(cx-220,305, cx-250,340);
+    p.drawLine(cx+220,305, cx+250,340);
 
-    p.setPen(QPen(QColor(0, 180, 120), 1.5));
-    const int cx = 320, cy = 200, gw = 200, gh = 160;
-    for (int i = -2; i <= 2; ++i) { int x = cx + i*gw/2; p.drawLine(x, 80, x, 320); }
-    for (int i = -2; i <= 2; ++i) { int y = cy + i*gh/2; p.drawLine(120, y, 520, y); }
+    p.setPen(QPen(QColor(255,230,0),5));
+    p.drawLine(cx-170,240, cx+170,240);
+    p.drawLine(cx-220,305, cx-170,240);
+    p.drawLine(cx+220,305, cx+170,240);
 
-    p.setPen(QPen(QColor(0, 212, 170), 2));
-    p.setBrush(Qt::NoBrush);
-    p.drawRect(cx-30, cy-25, 60, 50);
-    p.drawLine(cx-40, cy, cx+40, cy);
-    p.drawLine(cx, cy-35, cx, cy+35);
+    p.drawLine(cx-110,170, cx+110,170);
+    p.drawLine(cx-170,240, cx-110,170);
+    p.drawLine(cx+170,240, cx+110,170);
 
-    QFont font; font.setPointSize(18); font.setBold(true);
-    p.setFont(font); p.setPen(QColor(0, 212, 170));
-    p.drawText(QRect(0, 20, 640, 40), Qt::AlignCenter, "REAR VIEW");
+    p.setPen(QPen(QColor(255,255,255,180),2,Qt::DashLine));
+    p.drawLine(cx,160,cx,340);
 
-    font.setPointSize(10); font.setBold(false);
-    p.setFont(font); p.setPen(QColor(100, 110, 120));
-    p.drawText(QRect(0, 58, 640, 24), Qt::AlignCenter, "Placeholder \u2022 No camera connected");
+    // ============================================
+    // 3 SIDE SENSOR DOTS EACH SIDE
+    // ============================================
+    int activeDots = 1;
 
-    p.setPen(Qt::NoPen); p.setBrush(QColor(40, 45, 50));
-    p.drawRect(0, 340, 640, 60);
-    p.end();
+    if (m_distance > 100) activeDots = 1;
+    else if (m_distance > 60) activeDots = 2;
+    else activeDots = 3;
+
+    for (int i = 0; i < 3; i++)
+    {
+        QColor dotColor;
+
+        if (i < activeDots)
+            dotColor = distColor;
+        else
+            dotColor = QColor(80,80,80,130);
+
+        p.setBrush(dotColor);
+        p.setPen(Qt::NoPen);
+
+        int y = 185 + i * 36;
+
+        int offset = 0;
+
+        // red danger vibration effect
+        if (m_distance <= 40 && blink)
+            offset = (i % 2 == 0) ? 2 : -2;
+
+        p.drawEllipse(x0 + 8 + offset, y, 14, 14);
+        p.drawEllipse(width() - 24 + offset, y, 14, 14);
+    }
+
+    // ============================================
+    // FOOTER
+    // ============================================
+    font.setPointSize(9);
+    font.setBold(false);
+    p.setFont(font);
+    p.setPen(QColor(255,255,255,220));
+
+    p.drawText(QRect(x0,376,w,18),
+               Qt::AlignCenter,
+               "Check surroundings before reversing");
 }
