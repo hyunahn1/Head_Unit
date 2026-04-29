@@ -4,16 +4,26 @@
 #include "PdcTypes.h"
 
 #include <QWidget>
-#include <QPaintEvent>
+#include <QPixmap>
+#include <QImage>
+#include <QTimer>
 
 class ReverseCameraWindow : public QWidget
 {
+    Q_OBJECT
+
 public:
     explicit ReverseCameraWindow(QWidget *parent = nullptr);
     ~ReverseCameraWindow() override;
 
+public slots:
+    void setPdcState(const PdcState &state);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
+
+private slots:
+    void onPullFrame();
 
 private:
     void buildPlaceholderPixmap();
@@ -23,6 +33,7 @@ private:
     QPixmap m_placeholder;
     bool    m_showPlaceholder = true;
     QImage  m_frame;
+    PdcState m_pdcState;
     QTimer *m_frameTimer  = nullptr;
     int     m_noFrameCount = 0;
 

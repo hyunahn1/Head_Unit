@@ -2,21 +2,33 @@ hu_shell_autogen/timestamp: \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/build_modular/shell/hu_shell_autogen/moc_predefs.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/interfaces/IVehicleDataProvider.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/models/GearStateManager.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/models/PdcTypes.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/core/protocol/ShellProtocol.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/resources/headunit.qrc \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/CMakeLists.txt \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ClusterOutputWindow.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ClusterOutputWindow.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/HUCompositor.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/HUCompositor.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleBridge.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleBridge.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleController.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleController.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleSurfaceWidget.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ModuleSurfaceWidget.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/PdcBeepController.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/PdcBeepController.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/PdcController.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/PdcController.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ShellWindow.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/ShellWindow.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/main.cpp \
-	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/FallbackContentWidget.cpp \
-	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/FallbackContentWidget.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/GearPanel.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/GearPanel.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/GlowOverlay.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/GlowOverlay.h \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/PdcOverlayPainter.cpp \
+	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/PdcOverlayPainter.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/ReverseCameraWindow.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/ReverseCameraWindow.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/SplashScreen.cpp \
@@ -25,6 +37,7 @@ hu_shell_autogen/timestamp: \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/StatusBar.h \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/TabBar.cpp \
 	/home/seame/SEA_ME/Head_Unit/Head_Unit_jun/shell/widgets/TabBar.h \
+	/usr/include/GL/gl.h \
 	/usr/include/asm-generic/errno-base.h \
 	/usr/include/asm-generic/errno.h \
 	/usr/include/assert.h \
@@ -201,6 +214,7 @@ hu_shell_autogen/timestamp: \
 	/usr/include/errno.h \
 	/usr/include/features-time64.h \
 	/usr/include/features.h \
+	/usr/include/inttypes.h \
 	/usr/include/linux/errno.h \
 	/usr/include/locale.h \
 	/usr/include/pthread.h \
@@ -288,13 +302,22 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
 	/usr/include/x86_64-linux-gnu/gnu/stubs.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QDeadlineTimer \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QEvent \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QLoggingCategory \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QMap \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QMargins \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QMetaType \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QObject \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QPointF \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QProcess \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QRect \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QScopedPointer \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QSize \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QString \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QStringList \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QVariantMap \
+	/usr/include/x86_64-linux-gnu/qt5/QtCore/QVector \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QtCore \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/QtCoreDepends \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/qabstractanimation.h \
@@ -489,10 +512,22 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/qwaitcondition.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/qwineventnotifier.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtCore/qxmlstream.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QImage \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/QLinearGradient \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QMatrix3x3 \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QMatrix4x4 \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/QMouseEvent \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QOpenGLContext \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QOpenGLFunctions \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QOpenGLTextureBlitter \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QOpenGLWindow \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QPaintDevice \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QPaintDeviceWindow \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/QPainter \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/QPainterPath \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QPixmap \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QSurfaceFormat \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/QWindow \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qbrush.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qcolor.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qcursor.h \
@@ -500,11 +535,21 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qfont.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qfontinfo.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qfontmetrics.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qgenericmatrix.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qicon.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qimage.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qkeysequence.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qmatrix.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qmatrix4x4.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopengl.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopenglcontext.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopenglext.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopenglfunctions.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopengltextureblitter.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopenglversionfunctions.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qopenglwindow.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpaintdevice.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpaintdevicewindow.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpainter.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpainterpath.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpalette.h \
@@ -512,15 +557,21 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpixelformat.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpixmap.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qpolygon.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qquaternion.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qregion.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qrgb.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qrgba64.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qsurface.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qsurfaceformat.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qtextoption.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qtgui-config.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qtguiglobal.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qtouchdevice.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qtransform.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qvector2d.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qvector3d.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qvector4d.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtGui/qwindow.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtGui/qwindowdefs.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtNetwork/QLocalServer \
 	/usr/include/x86_64-linux-gnu/qt5/QtNetwork/QLocalSocket \
@@ -529,11 +580,20 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/qt5/QtNetwork/qlocalsocket.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetwork-config.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetworkglobal.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/QWaylandCompositor \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/QWaylandOutput \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/QWaylandOutputMode \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qtwaylandcompositor-config.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qtwaylandcompositorglobal.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qwaylandcompositor.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qwaylandcompositorextension.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qwaylandoutput.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWaylandCompositor/qwaylandoutputmode.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QHBoxLayout \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QMainWindow \
+	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QOpenGLWidget \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QPushButton \
-	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QStackedWidget \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QVBoxLayout \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qabstractbutton.h \
@@ -544,9 +604,9 @@ hu_shell_autogen/timestamp: \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qlayout.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qlayoutitem.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qmainwindow.h \
+	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qopenglwidget.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qpushbutton.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qsizepolicy.h \
-	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qstackedwidget.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtabwidget.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgets-config.h \
 	/usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h \
@@ -558,4 +618,7 @@ hu_shell_autogen/timestamp: \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
+	/usr/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake \
+	/usr/share/cmake-3.28/Modules/FindPackageMessage.cmake \
+	/usr/share/cmake-3.28/Modules/FindPkgConfig.cmake \
 	/usr/bin/cmake
