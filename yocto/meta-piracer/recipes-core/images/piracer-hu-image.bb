@@ -34,7 +34,7 @@ IMAGE_INSTALL:append = " \
 # hu_shell은 eglfs로 DRM/KMS에 직접 접근하는 Wayland 컴포지터입니다.
 
 # WiFi 설정 + network interfaces 후처리로 덮어쓰기
-ROOTFS_POSTPROCESS_COMMAND:append = " setup_wifi_config; setup_ssh_config; setup_serial_console; "
+ROOTFS_POSTPROCESS_COMMAND:append = " setup_wifi_config; setup_ssh_config; setup_serial_console; setup_touch_driver_config; "
 
 setup_wifi_config() {
     # wpa_supplicant.conf 작성
@@ -74,4 +74,12 @@ setup_serial_console() {
         ln -sf /lib/systemd/system/serial-getty@.service \
             ${IMAGE_ROOTFS}/etc/systemd/system/getty.target.wants/serial-getty@ttyAMA0.service || true
     fi
+}
+
+# The Waveshare 7.9" DSI overlay exposes both Goodix (0x14) and Ilitek
+# (0x41) touch nodes. Our panel uses the Goodix path; probing the unused
+# Ilitek node floods the console with ili210x I2C read failures.
+setup_touch_driver_config() {
+    mkdir -p ${IMAGE_ROOTFS}/etc/modprobe.d
+    printf 'blacklist ili210x\n' > ${IMAGE_ROOTFS}/etc/modprobe.d/blacklist-ili210x.conf
 }
