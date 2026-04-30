@@ -6,14 +6,18 @@
 #include <QWidget>
 #include <QPixmap>
 #include <QImage>
+#include <QString>
 #include <QTimer>
+
+class GearPanel;
+class GearStateManager;
 
 class ReverseCameraWindow : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ReverseCameraWindow(QWidget *parent = nullptr);
+    explicit ReverseCameraWindow(GearStateManager *gearState = nullptr, QWidget *parent = nullptr);
     ~ReverseCameraWindow() override;
 
 public slots:
@@ -29,8 +33,11 @@ private:
     void buildPlaceholderPixmap();
     bool startCameraPreview();
     void stopCameraPreview();
+    void handlePipelineMessages();
+    void fallbackToPlaceholder(const QString &reason);
 
     QPixmap m_placeholder;
+    GearPanel *m_gearPanel = nullptr;
     bool    m_showPlaceholder = true;
     QImage  m_frame;
     PdcState m_pdcState;

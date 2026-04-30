@@ -80,13 +80,18 @@ void PdcOverlayPainter::paint(QPainter *painter, const QRect &rect, const PdcSta
     drawGuideLine(painter, rect, 0.80f, 0.64f, 0.96f,
                   QColor(255, 64, 64, state.warningLevel == PdcWarningLevel::Critical ? 240 : 100), 6);
 
-    const int sectorCount = qMax(4, state.rearSensors.size());
+    const int sectorCount = qMax(1, state.rearSensors.size());
     const int barY = rect.bottom() - 44;
     const int margin = 18;
     const int gap = 8;
-    const int barW = (rect.width() - margin * 2 - gap * (sectorCount - 1)) / sectorCount;
+    const int barW = (sectorCount == 1)
+        ? qMin(rect.width() / 3, 220)
+        : (rect.width() - margin * 2 - gap * (sectorCount - 1)) / sectorCount;
     for (int i = 0; i < sectorCount; ++i) {
-        QRect bar(rect.left() + margin + i * (barW + gap), barY, barW, 20);
+        const int barX = (sectorCount == 1)
+            ? rect.center().x() - barW / 2
+            : rect.left() + margin + i * (barW + gap);
+        QRect bar(barX, barY, barW, 20);
         QColor fill(120, 120, 120, 80);
         if (i < state.rearSensors.size() && state.rearSensors.at(i).valid && !state.stale) {
             const float distance = state.rearSensors.at(i).distanceCm;

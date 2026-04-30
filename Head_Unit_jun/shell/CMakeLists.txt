@@ -54,9 +54,11 @@ target_link_libraries(hu_shell PRIVATE
 
 find_package(PkgConfig)
 if(PkgConfig_FOUND)
-    pkg_check_modules(GST gstreamer-1.0 gstreamer-app-1.0)
+    pkg_check_modules(GST gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0)
     if(GST_FOUND)
         target_include_directories(hu_shell PRIVATE ${GST_INCLUDE_DIRS})
+        target_compile_options(hu_shell PRIVATE ${GST_CFLAGS_OTHER})
+        target_link_directories(hu_shell PRIVATE ${GST_LIBRARY_DIRS})
         target_link_libraries(hu_shell PRIVATE ${GST_LIBRARIES})
         target_compile_definitions(hu_shell PRIVATE HU_CAMERA_PREVIEW_AVAILABLE)
         message(STATUS "GStreamer found - libcamerasrc pipeline enabled")

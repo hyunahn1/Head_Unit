@@ -2,6 +2,8 @@
 # CMake build output
 # ============================================================
 build/
+build-*/
+build_*/
 cmake-build-*/
 CMakeCache.txt
 CMakeFiles/
@@ -47,6 +49,8 @@ qrc_*.cpp
 
 # Cursor / Copilot local state
 .cursor/
+.claude/
+.codex/
 
 # ============================================================
 # macOS
@@ -69,6 +73,8 @@ venv/
 # ============================================================
 # Yocto / BitBake
 # ============================================================
+yocto/build-*/
+yocto/build_*/
 tmp/
 sstate-cache/
 downloads/
@@ -83,9 +89,3 @@ downloads/
 *.bak
 *.swp
 *~
-
-
-   yocto/meta-openembedded/
-   yocto/meta-qt5/
-   yocto/meta-raspberrypi/
-   yocto/poky/

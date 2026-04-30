@@ -24,6 +24,11 @@ struct PdcState {
     QVector<PdcSensorReading> rearSensors;
     float nearestDistanceCm = -1.0f;
     PdcWarningLevel warningLevel = PdcWarningLevel::Off;
+    int trackedSensorIndex = -1;
+    QString trackedSensorName;
+    int confidencePercent = 0;
+    int validSensorCount = 0;
+    bool distanceHeld = false;
     bool active = false;
     bool stale = true;
     QString fault;

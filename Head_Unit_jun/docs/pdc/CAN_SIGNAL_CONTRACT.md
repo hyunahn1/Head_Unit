@@ -8,10 +8,8 @@
 
 | Signal | Direction | Required | Purpose |
 |--------|-----------|----------|---------|
-| rear_left_distance_cm | CAN -> HU | yes | 좌측 후방 obstacle distance |
-| rear_mid_left_distance_cm | CAN -> HU | yes | 중앙 좌측 obstacle distance |
-| rear_mid_right_distance_cm | CAN -> HU | yes | 중앙 우측 obstacle distance |
-| rear_right_distance_cm | CAN -> HU | yes | 우측 후방 obstacle distance |
+| rear_center_distance_cm | CAN -> HU | yes | 현재 HC-SR04-style 후방 중앙 obstacle distance |
+| rear_left/right_distance_cm | CAN -> HU | optional | 향후 다채널 PDC 확장용 sector distance |
 | vehicle_speed_kmh | CAN/VSOMEIP -> HU | recommended | PDC activation guard, warning suppression above threshold |
 | gear_state | internal/VSOMEIP -> HU | yes | PDC activation only in `R` |
 | pdc_sensor_health | CAN -> HU | optional | sensor disconnected or out-of-range diagnostics |
@@ -22,11 +20,11 @@
 
 | CAN ID | DLC | Byte Layout | Scale | Notes |
 |--------|-----|-------------|-------|-------|
-| `0x123` | 8 | B0 speed 후보, B1 distance 후보, B2-B7 zero | uint8, km/h/cm | observed live: `00 48/49 00 00 00 00 00 00`, about 5 Hz |
+| `0x123` | 8 | B0 speed 후보, B1 rear_center distance 후보, B2-B7 zero | uint8, km/h/cm | observed live: `00 48/49 00 00 00 00 00 00`, about 5 Hz |
 | `0x350` | 8 | B0-B1 RL, B2-B3 RML, B4-B5 RMR, B6-B7 RR | uint16 little-endian, cm | proposed future 4-sensor distances |
 | `0x351` | 1 | B0 bitmask sensor valid | bit set = valid | optional validity |
 
-현재 `SocketCanPdcProvider`는 `0x123`의 B1을 후방 전체 거리로 복제해서 표시하고, `0x350`이 들어오면 4개 후방 센서를 개별 decode한다. 실제 format이 다르면 provider decode만 바꾸고, 상위 `PdcController`와 UI는 유지한다.
+현재 `SocketCanPdcProvider`는 `0x123`의 B1을 `rear_center` 단일 후방 거리로 표시한다. `0x350`이 들어오면 향후 4개 후방 센서를 개별 decode한다. 실제 format이 다르면 provider decode만 바꾸고, 상위 `PdcController`와 UI는 유지한다.
 
 ### 3.1 Live Capture Summary
 
@@ -48,7 +46,7 @@ Interpretation:
 
 - `0x123` arrives about every 200 ms.
 - B0 stayed `0x00`, matching stationary speed.
-- B1 moved around `0x47-0x4B` decimal 71-75, a plausible ultrasonic distance in cm.
+- B1 moved around `0x47-0x4B` decimal 71-75, a plausible rear-center ultrasonic distance in cm.
 - Need one physical check: move an obstacle closer/farther and confirm B1 tracks distance.
 
 ## 4. Discovery Procedure

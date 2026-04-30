@@ -377,7 +377,7 @@ void ShellWindow::onGearChanged(GearState gear, const QString &source)
     }
     if (isReverse) {
         if (!m_reverseCamera) {
-            m_reverseCamera = new ReverseCameraWindow(this);
+            m_reverseCamera = new ReverseCameraWindow(m_gearStateManager, this);
             m_reverseCamera->setAttribute(Qt::WA_DeleteOnClose);
             if (m_pdcController) {
                 connect(m_pdcController, &PdcController::stateChanged,

@@ -39,7 +39,7 @@ Goal: replace mock values with real ultrasonic sensor CAN data.
 
 Status: implemented in first pass with two decode paths:
 
-- observed live frame `0x123`: B1 is treated as a single rear distance and copied to all rear sectors.
+- observed live frame `0x123`: B1 is treated as the current hardware's single `rear_center` distance.
 - proposed future frame `0x350`: four little-endian uint16 distances map to RL/RML/RMR/RR.
 
 Files to add:

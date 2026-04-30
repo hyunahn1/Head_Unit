@@ -20,7 +20,9 @@ constexpr canid_t kFourSensorCanId = 0x350;
 constexpr float kMinDistanceCm = 2.0f;
 constexpr float kMaxDistanceCm = 400.0f;
 
-const QStringList kSensorNames = {
+const QString kCenterSensorName = QStringLiteral("rear_center");
+
+const QStringList kFourSensorNames = {
     QStringLiteral("rear_left"),
     QStringLiteral("rear_mid_left"),
     QStringLiteral("rear_mid_right"),
@@ -136,7 +138,7 @@ void SocketCanPdcProvider::onCanReadyRead()
 
     if (canId == kObservedCanId && frame.can_dlc >= 2) {
         // Live Pi capture currently shows 0x123 as: 00 48/49 00 ...
-        // Byte 0 stays zero while byte 1 changes around plausible cm values.
+        // The car has one rear HC-SR04-style module, so expose it as rear_center.
         emitUniformRearDistance(static_cast<float>(frame.data[1]));
     }
 }
@@ -145,16 +147,14 @@ void SocketCanPdcProvider::emitUniformRearDistance(float distanceCm)
 {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     QVector<PdcSensorReading> readings;
-    readings.reserve(kSensorNames.size());
+    readings.reserve(1);
 
-    for (const QString &name : kSensorNames) {
-        PdcSensorReading reading;
-        reading.name = name;
-        reading.distanceCm = distanceCm;
-        reading.valid = distanceValid(distanceCm);
-        reading.timestampMs = now;
-        readings.push_back(reading);
-    }
+    PdcSensorReading reading;
+    reading.name = kCenterSensorName;
+    reading.distanceCm = distanceCm;
+    reading.valid = distanceValid(distanceCm);
+    reading.timestampMs = now;
+    readings.push_back(reading);
 
     emit readingsChanged(readings);
 }
@@ -164,11 +164,11 @@ void SocketCanPdcProvider::emitFourRearDistances(float rl, float rml, float rmr,
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     const float values[] = {rl, rml, rmr, rr};
     QVector<PdcSensorReading> readings;
-    readings.reserve(kSensorNames.size());
+    readings.reserve(kFourSensorNames.size());
 
-    for (int i = 0; i < kSensorNames.size(); ++i) {
+    for (int i = 0; i < kFourSensorNames.size(); ++i) {
         PdcSensorReading reading;
-        reading.name = kSensorNames.at(i);
+        reading.name = kFourSensorNames.at(i);
         reading.distanceCm = values[i];
         reading.valid = distanceValid(values[i]);
         reading.timestampMs = now;

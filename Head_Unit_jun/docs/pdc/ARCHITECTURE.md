@@ -69,16 +69,13 @@ visual overlay           audible warning
 
 ### Sensor Layout
 
-초기 구현은 후방 4채널을 기준으로 한다.
+현재 하드웨어는 HC-SR04-style 후방 중앙 1채널을 기준으로 한다. 모듈 전면의 두 원형 부품은 송신/수신 트랜스듀서이며, 소프트웨어 모델에서는 하나의 `rear_center` 거리 센서로 취급한다. 4채널 PDC는 CAN `0x350` 확장 frame으로 지원 가능하게 남긴다.
 
 | Index | Name | 위치 |
 |-------|------|------|
-| 0 | rear_left | 좌측 후방 |
-| 1 | rear_mid_left | 중앙 좌측 |
-| 2 | rear_mid_right | 중앙 우측 |
-| 3 | rear_right | 우측 후방 |
+| 0 | rear_center | 중앙 후방 |
 
-전방 센서가 추가되면 같은 model에 `front_*`를 추가하고, overlay는 현재 `R` gear에서는 rear만 표시한다.
+좌/우 또는 전방 센서가 추가되면 같은 model에 `rear_left`, `rear_right`, `front_*`를 추가하고, overlay는 현재 `R` gear에서는 rear만 표시한다.
 
 ### Warning Levels
 

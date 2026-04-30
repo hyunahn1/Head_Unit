@@ -1,4 +1,5 @@
 #include "ReverseCameraWindow.h"
+#include "GearPanel.h"
 
 #include <QDebug>
 #include <QFont>
@@ -8,6 +9,7 @@
 #ifdef HU_CAMERA_PREVIEW_AVAILABLE
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
+#include <gst/video/video.h>
 #endif
 
 static constexpr int kFrameIntervalMs = 33;   // ~30 fps polling
@@ -17,7 +19,7 @@ static constexpr int kScreenH         = 600;
 static constexpr int kGearPanelW      = 96;
 static constexpr int kCameraAreaW     = kScreenW - kGearPanelW;
 
-ReverseCameraWindow::ReverseCameraWindow(QWidget *parent)
+ReverseCameraWindow::ReverseCameraWindow(GearStateManager *gearState, QWidget *parent)
     : QWidget(parent)
 {
     setWindowTitle("Rear View");
@@ -26,6 +28,12 @@ ReverseCameraWindow::ReverseCameraWindow(QWidget *parent)
     setStyleSheet("background-color: #0a0a0c;");
 
     buildPlaceholderPixmap();
+
+    if (gearState) {
+        m_gearPanel = new GearPanel(gearState, this);
+        m_gearPanel->setGeometry(0, 0, kGearPanelW, kScreenH);
+        m_gearPanel->raise();
+    }
 
     if (startCameraPreview()) {
         m_showPlaceholder = false;
@@ -99,12 +107,12 @@ void ReverseCameraWindow::stopCameraPreview()
 #ifdef HU_CAMERA_PREVIEW_AVAILABLE
     if (m_pipeline) {
         gst_element_set_state(reinterpret_cast<GstElement *>(m_pipeline), GST_STATE_NULL);
+        if (m_appsink) {
+            gst_object_unref(reinterpret_cast<GstElement *>(m_appsink));
+            m_appsink = nullptr;
+        }
         gst_object_unref(reinterpret_cast<GstElement *>(m_pipeline));
         m_pipeline = nullptr;
-    }
-    if (m_appsink) {
-        gst_object_unref(reinterpret_cast<GstElement *>(m_appsink));
-        m_appsink = nullptr;
     }
 #endif
 }
@@ -112,6 +120,8 @@ void ReverseCameraWindow::stopCameraPreview()
 void ReverseCameraWindow::onPullFrame()
 {
 #ifdef HU_CAMERA_PREVIEW_AVAILABLE
+    handlePipelineMessages();
+
     if (!m_appsink) return;
 
     GstSample *sample = gst_app_sink_try_pull_sample(
@@ -119,26 +129,95 @@ void ReverseCameraWindow::onPullFrame()
 
     if (!sample) {
         if (++m_noFrameCount > kNoFrameLimit) {
-            qWarning() << "[RearCamera] no frames received, falling back to placeholder";
-            m_showPlaceholder = true;
-            m_frameTimer->stop();
-            update();
+            fallbackToPlaceholder(QStringLiteral("no frames received"));
         }
         return;
     }
 
     m_noFrameCount = 0;
+    GstCaps *caps = gst_sample_get_caps(sample);
     GstBuffer *buf = gst_sample_get_buffer(sample);
-    if (buf) {
-        GstMapInfo map;
-        if (gst_buffer_map(buf, &map, GST_MAP_READ)) {
-            m_frame = QImage(map.data, kScreenW, kScreenH, kScreenW * 3, QImage::Format_RGB888).copy();
-            gst_buffer_unmap(buf, &map);
+    if (buf && caps) {
+        GstVideoInfo info;
+        if (gst_video_info_from_caps(&info, caps) && GST_VIDEO_INFO_FORMAT(&info) == GST_VIDEO_FORMAT_RGB) {
+            GstVideoFrame frame;
+            if (gst_video_frame_map(&frame, &info, buf, GST_MAP_READ)) {
+                const int frameWidth = GST_VIDEO_INFO_WIDTH(&info);
+                const int frameHeight = GST_VIDEO_INFO_HEIGHT(&info);
+                const int stride = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, 0);
+                const uchar *data = static_cast<const uchar *>(GST_VIDEO_FRAME_PLANE_DATA(&frame, 0));
+                m_frame = QImage(data, frameWidth, frameHeight, stride, QImage::Format_RGB888).copy();
+                gst_video_frame_unmap(&frame);
+            } else {
+                qWarning() << "[RearCamera] failed to map video frame";
+            }
+        } else {
+            gchar *capsText = caps ? gst_caps_to_string(caps) : nullptr;
+            qWarning() << "[RearCamera] unexpected sample caps:"
+                       << (capsText ? QString::fromUtf8(capsText) : QStringLiteral("none"));
+            if (capsText) g_free(capsText);
+        }
+        if (!m_frame.isNull()) {
+            m_showPlaceholder = false;
             update();
         }
     }
     gst_sample_unref(sample);
 #endif
+}
+
+void ReverseCameraWindow::handlePipelineMessages()
+{
+#ifdef HU_CAMERA_PREVIEW_AVAILABLE
+    if (!m_pipeline) return;
+
+    GstBus *bus = gst_element_get_bus(reinterpret_cast<GstElement *>(m_pipeline));
+    if (!bus) return;
+
+    while (GstMessage *message = gst_bus_pop_filtered(
+               bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS))) {
+        if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
+            GError *error = nullptr;
+            gchar *debug = nullptr;
+            gst_message_parse_error(message, &error, &debug);
+            const QString reason = QStringLiteral("pipeline error: %1")
+                                       .arg(error ? QString::fromUtf8(error->message)
+                                                  : QStringLiteral("unknown"));
+            qWarning() << "[RearCamera]" << reason
+                       << (debug ? QString::fromUtf8(debug) : QString());
+            if (error) g_error_free(error);
+            if (debug) g_free(debug);
+            gst_message_unref(message);
+            gst_object_unref(bus);
+            fallbackToPlaceholder(reason);
+            return;
+        }
+
+        if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+            gst_message_unref(message);
+            gst_object_unref(bus);
+            fallbackToPlaceholder(QStringLiteral("pipeline reached EOS"));
+            return;
+        }
+
+        gst_message_unref(message);
+    }
+
+    gst_object_unref(bus);
+#endif
+}
+
+void ReverseCameraWindow::fallbackToPlaceholder(const QString &reason)
+{
+#ifdef HU_CAMERA_PREVIEW_AVAILABLE
+    qWarning() << "[RearCamera]" << reason << "- falling back to placeholder";
+    if (m_frameTimer) m_frameTimer->stop();
+    stopCameraPreview();
+#else
+    Q_UNUSED(reason)
+#endif
+    m_showPlaceholder = true;
+    update();
 }
 
 void ReverseCameraWindow::paintEvent(QPaintEvent *event)
@@ -184,9 +263,9 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
     QColor dotColor;
     if (!hasDistance)
         dotColor = QColor(160, 160, 160);
-    else if (distance > 80)
-        dotColor = QColor(0, 255, 120);
     else if (distance > 40)
+        dotColor = QColor(0, 255, 120);
+    else if (distance > 20)
         dotColor = QColor(255, 210, 0);
     else
         dotColor = QColor(255, 0, 0);
@@ -194,24 +273,59 @@ void ReverseCameraWindow::paintEvent(QPaintEvent *event)
     const QColor yellow(255, 230, 0);
     const QColor red(255, 0, 0);
 
-    // ---- Distance box ----
-    p.setBrush(QColor(0, 0, 0, 155));
-    p.setPen(QPen(QColor(255, 255, 255, 80), 2));
-    p.drawRoundedRect(cx - 115, 125, 230, 78, 16, 16);
-
     QFont font;
-    font.setPointSize(11);
-    p.setFont(font);
-    p.setPen(Qt::white);
-    p.drawText(QRect(cx - 115, 136, 230, 18), Qt::AlignCenter, "DISTANCE");
+    if (hasDistance && distance < 100) {
+        // ---- Distance box ----
+        p.setBrush(QColor(0, 0, 0, 155));
+        p.setPen(QPen(QColor(255, 255, 255, 80), 2));
+        p.drawRoundedRect(cx - 115, 125, 230, 78, 16, 16);
 
-    font.setPointSize(30);
-    font.setBold(true);
-    p.setFont(font);
-    p.setPen(dotColor);
-    p.drawText(QRect(cx - 115, 158, 230, 34),
-               Qt::AlignCenter,
-               hasDistance ? (QString::number(distance) + " cm") : QStringLiteral("-- cm"));
+        font.setPointSize(11);
+        p.setFont(font);
+        p.setPen(Qt::white);
+        p.drawText(QRect(cx - 115, 136, 230, 18), Qt::AlignCenter, "DISTANCE");
+
+        font.setPointSize(30);
+        font.setBold(true);
+        p.setFont(font);
+        p.setPen(dotColor);
+        p.drawText(QRect(cx - 115, 158, 230, 34),
+                   Qt::AlignCenter,
+                   QString::number(distance) + " cm");
+
+        if (!m_pdcState.trackedSensorName.isEmpty()) {
+            QString zone = m_pdcState.trackedSensorName;
+            zone.replace(QStringLiteral("rear_"), QString());
+            zone.replace(QStringLiteral("mid_"), QStringLiteral("M"));
+            zone.replace(QLatin1Char('_'), QLatin1Char(' '));
+            zone = zone.toUpper();
+
+            QString confidenceText = QStringLiteral("%1  %2%")
+                                         .arg(zone)
+                                         .arg(m_pdcState.confidencePercent);
+            if (m_pdcState.distanceHeld) {
+                confidenceText += QStringLiteral("  HOLD");
+            }
+
+            font.setPointSize(8);
+            font.setBold(false);
+            p.setFont(font);
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(0, 0, 0, 145));
+            p.drawRoundedRect(cx - 82, 209, 164, 22, 7, 7);
+
+            p.setPen(QColor(230, 255, 245, 220));
+            p.drawText(QRect(cx - 78, 212, 156, 16),
+                       Qt::AlignCenter,
+                       confidenceText);
+
+            const int barW = qBound(0, (m_pdcState.confidencePercent * 132) / 100, 132);
+            p.setPen(QPen(QColor(255, 255, 255, 45), 2, Qt::SolidLine, Qt::RoundCap));
+            p.drawLine(cx - 66, 228, cx + 66, 228);
+            p.setPen(QPen(dotColor, 2, Qt::SolidLine, Qt::RoundCap));
+            p.drawLine(cx - 66, 228, cx - 66 + barW, 228);
+        }
+    }
 
     // ---- Parking guide lines ----
     const int yBottom = 505;

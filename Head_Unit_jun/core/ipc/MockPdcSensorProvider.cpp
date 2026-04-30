@@ -4,12 +4,7 @@
 #include <QtMath>
 
 namespace {
-const QStringList kSensorNames = {
-    QStringLiteral("rear_left"),
-    QStringLiteral("rear_mid_left"),
-    QStringLiteral("rear_mid_right"),
-    QStringLiteral("rear_right")
-};
+const QString kSensorName = QStringLiteral("rear_center");
 }
 
 MockPdcSensorProvider::MockPdcSensorProvider(QObject *parent)
@@ -40,15 +35,14 @@ void MockPdcSensorProvider::publishNextFrame()
     const float nearest = 22.0f + static_cast<float>(wave) * 135.0f;
 
     QVector<PdcSensorReading> readings;
-    readings.reserve(kSensorNames.size());
-    for (int i = 0; i < kSensorNames.size(); ++i) {
-        PdcSensorReading reading;
-        reading.name = kSensorNames.at(i);
-        reading.distanceCm = nearest + qAbs(i - 1.5f) * 18.0f;
-        reading.valid = true;
-        reading.timestampMs = now;
-        readings.push_back(reading);
-    }
+    readings.reserve(1);
+
+    PdcSensorReading reading;
+    reading.name = kSensorName;
+    reading.distanceCm = nearest;
+    reading.valid = true;
+    reading.timestampMs = now;
+    readings.push_back(reading);
 
     ++m_phase;
     emit readingsChanged(readings);
